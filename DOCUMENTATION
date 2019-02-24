@@ -1,0 +1,60 @@
+class NeuralNet() - returns a NeuralNet object
+	
+	Parameters: 
+		*layers- layers to be used in the NeuralNet, all types can be found in further documentation
+		
+	Functions:
+		vectorize(normalData) - Private function that helps convert normalData to type Vector or type Matrix
+		
+		run(inputLayer, fullReturn = False,learningRate = 1) - Runs the Neural Network with the given inputLayer. inputLayer should be of type Vector() or Matrix(). If fullReturn is True all Hidden Layers  will be returned, otherwise a Vector or Matrix will be returned based on the structure of the Neural Network. learningRate is an integer that represents how fast the system learns. High learning rates mean less data but lower accuracy, low learning rates are better for lots of data and higher accuracy.
+		
+		stochasticDescent(trainingData, groupingSize = 5) - Trains the Network using Stochastic Gradient Descent. trainingData should be in form of [(input1,output1), (input2,output2) ... (inputN,outputN)]. all inputs and outputs should be of type Vector or Matrix, however it may still work with other data types
+
+		endDerivativeStochastic(vect, expected) - Private Function that determines how much the output affects the cost function
+
+Vector 
+
+
+Matrix - Used to store 2d arrays:
+	Parameters:
+		randomValues = False, if True, the Matrix will be size rows x cols with all randomvalues
+		rows = 2, Will only be used if randomValues is True or data is an integer. if data is an integer, then the matrix will be size rows x cols, with all values being data
+		cols = 2, Will only be used if randomValues is True or data is an integer. if data is an integer, then the matrix will be size rows x cols, with all values being data
+		data = 0. By default the data is zero, initiating a blank array. Otherwise initialize with data of type numpy.ndarray()
+	Usages:
+		Matrix times Vector = M x V
+		Matrix times Matrix = M1 x M2
+		Matrix plus Matrix  = M1 + M2 (must be of same dimensions)
+		Matrix minus Matrix = M1 - M2 (must be of same dimensions)
+		
+		Storing 2D 
+
+1 Dimensional Layers:
+	Squashing; Dont have any weights. Once initiated they cannot be changed. Usually(with exception to pooling functions) return an output the same size as the input
+		Common Functions:
+			run(vecObject) - vecObject should be of type Vector. applies the squashing function to the whole vector, returns a Vector object.
+			derivativePrevLayer(vec, currentDerivative)	- vec is the input Vector that is passed to the function. The currentDerivative is all the derivatives of the output function, which is also of type Vector. It tells how the previous layer is affecting the cost function.
+			apply(x) - applies the squashing function to a single value	
+		Types of Squashing: (x is an example input that is a real number) 
+			Sigmoid - 1/(1+e^-x)
+			Softplus - ln(1+e^x)
+			Binary Step - 1 if x>0 else 0
+			ReLU - max(0,x)
+			PReLU(a) - x if x>0 else a*x
+			ELU(a) - x if x>0 else a*(e^x -1)
+			Tanh - tanh(x) (hyperbolic tangent
+			Arctan - arctan(x) (inverse tangent)
+			MaxPooling(poolingSize) - Traverses the vector from top to bottom and analyzes the max of every continous pair, with the size of the pair being the pooling size 
+			AvgPooling(poolingSize) - Traverses the vector from top to bottom and analyzes the average of every continous pair, with the size of the pair being the pooling size 
+	Hidden; All Hidden functions have weights of some kind. Which are random when initiated.These weights are optimized using trainingData 
+		Common functions:
+			run(inputLayer) - inputLayer should be of type Vector. run applies the Layer's function
+			derivative(inputLayer,currentDerivative) - inputLayer and currentDerivative are of type Vector. this functions returns a Vector or Matrix, telling how each weight affects the cost function
+			derivativePrevLayer(inputLayer,currentDerivative) - vec is the input Vector that is passed to the function. The currentDerivative is all the derivatives of the output f    unction, which is also of type Vector. It tells how the previous layer is affecting the cost function.
+			blank() - returns a version of its weights where everything is 0
+			descend(derivatives) - based on how all the weights are affecting the cost, the weights are lowered.
+		Types of Hidden:
+			Bias - adds a certain amount to each value in the input vector based on the class's weights
+			MultiCross - Each output node is the sum, each input node multiplied by its own distinct weight. In other words multiply the input vector by a matrix of size outpitsize x inputsize
+
+
