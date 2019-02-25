@@ -209,11 +209,11 @@ class FullyConnected(Hidden):#TESTED - FIND BETTER/ ACTUAL NAME
 		return np.array([[input_layer[x]*output_layer_derivative[y] for x in range(self.inputsize)] for y in range(self.outputsize)])
 	
 	def derivative_prev_layer(self,input_layer, output_layer_derivative): # we dont need an input layer for this derivative, but we keep it so all derivativePrevLayers can be called the same
-		input_layer_derivatives = []
-		for x in range(self.inputsize):
-			input_layer_derivatives.append(sum([self.weights[y][x] * output_layer_derivative[y] for y in range(self.outputsize)]))
-		return np.array(input_layer_derivatives)
-	
+		#input_layer_derivatives = []
+		#for x in range(self.inputsize):
+		#	input_layer_derivatives.append(sum([self.weights[y][x] * output_layer_derivative[y] for y in range(self.outputsize)]))
+		#return np.array(input_layer_derivatives)
+		return np.matmul(np.swapaxes(self.weights,0,1),output_layer_derivative)
 	def blank(self):
 		return np.zeros((self.outputsize,self.inputsize)) 
 

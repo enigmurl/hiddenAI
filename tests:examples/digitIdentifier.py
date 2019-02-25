@@ -1,5 +1,5 @@
-from .AI.net import NeuralNet
-from .AI.layers1D import *
+from AI.net import NeuralNet
+from AI.layers1D import *
 from mnist import  MNIST
 import time
 import random
@@ -13,7 +13,7 @@ def printIm(img):#prints a representation of the digit
 
 mndata = MNIST('digitdata')
 images,labels = mndata.load_training()
-num_data = 60,000# of the 60,000 images in the MNIST database, how many do we want to use
+num_data = 60000# of the 60,000 images in the MNIST database, how many do we want to use
 formatted_inputs = []
 formatted_labels = []
 for ind in range(numData):
