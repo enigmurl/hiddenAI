@@ -1,11 +1,11 @@
 Finish NEAT
-make parameters better named and more consistent, 
-Make example folder, 
+Make example folder(needs to work actuall) 
 documentation folder.
-Make stuff easier to understand
 Test all layers
 q Learnings
 2d Layers
 	CNNS,RNNS
-convertors
-other types of training(the one on computerfile)
+other types of training(the one on computerfile for face recognition)
+KWARGS: starting_value,padding or not
+linear regression, decision tree 
+finish up pooling   

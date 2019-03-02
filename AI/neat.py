@@ -1,5 +1,3 @@
-import sys
-from net import NeuralNet
 import random
 import copy
 import numpy as np
@@ -38,11 +36,10 @@ class NEAT:
 		return return_models
 		
 	def breed(self,net1,net2,mutation_rate,mutation_max_size):
-		net = NeuralNet()
+		net =  Sequential()
 		for layer_num,layer in enumerate(net1):
 			if hasattr(layer,"weights"):#if it has weights
 				new_layer = copy.deepcopy(layer)
-				print(new_layer.weights)
 				mask = np.random.choice((True, False), size = layer.weights.shape)# breed
 				new_layer.weights[mask] = net2[layer_num].weights[mask]
 					
@@ -52,6 +49,7 @@ class NEAT:
 				blank_mutation[mutation_mask] = mutations[mutation_mask]#mutations are no longer blank
 				new_layer.weights += blank_mutation
 				net.add(new_layer)
+				print(blank_mutation)
 			else:
 				net.add(layer)
 		return net
@@ -62,4 +60,15 @@ class NEAT:
 	def save_model_to_file(fileName):
 		self.model.save_to_file(fileName)
 	
-	 
+if __name__ == "__main__":
+	from sequential import  Sequential
+	from layers1D import * 
+	net1 =  Sequential(FullyConnected(4,2),Bias(2,2),Sigmoid()) 
+	neat = NEAT(net1)
+	net2 =  Sequential(FullyConnected(4,2),Bias(2,2),Sigmoid())
+	for layer in net1:
+		print(layer) 
+	for layer in net2:
+		print(layer) 
+	for layer in neat.breed(net1,net2,0.1,2):
+		print(layer) 

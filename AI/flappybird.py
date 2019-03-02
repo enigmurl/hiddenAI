@@ -1,5 +1,5 @@
 import pygame
-from net import NeuralNet
+from sequential import Sequential
 from neat import NEAT
 from layers1D import *
 import random
@@ -47,21 +47,21 @@ class Bird:
 		if flap:
 			self.flap()
 			return
-		self.velocity += 4 * dt#gravity is 10 pixels per seconds^2
+		self.velocity += 400 * dt#gravity is 10 pixels per seconds^2
 
 	def draw(self,bird_size = 10,x_center = 200):
 		pygame.draw.rect(SCREEN,(125,0,125),pygame.Rect(x_center-bird_size,self.yvalue-bird_size,bird_size*2,bird_size*2))
 
 	def flap(self):
-		self.velocity = -15
+		self.velocity = -100
 	
 
 num_pillars = 10000
 pillars = [Pillar(500*x + 1000,random.randint(0,HEIGHT-200)) for x in range(num_pillars)]#pillars are spaced 500 apart,and the first is 1000 away from the bird
 num_birds = 50
-model = NeuralNet(FullyConnected(4,2),Bias(2,2),Sigmoid(),FullyConnected(2,1),Bias(1,1),Sigmoid()) 
+model = Sequential(FullyConnected(4,2),Bias(2,2),Sigmoid(),FullyConnected(2,1),Bias(1,1),Sigmoid()) 
 neat = NEAT(model,num_per_generation = num_birds)
-all_bird_nets = [NeuralNet(FullyConnected(4,2),Bias(2,2),Sigmoid()) for _ in range(num_birds)] 
+all_bird_nets = [Sequential(FullyConnected(4,2),Bias(2,2),Sigmoid()) for _ in range(num_birds)] 
 all_real_birds = [Bird() for _ in range(num_birds)]
 running = True
 clock = pygame.time.Clock()
