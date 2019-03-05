@@ -38,15 +38,13 @@ for ind in range(num_data):
 				Bias(),
 				Sigmoid())'''
 net = Sequential((1,28,28),
-				Convolution2D(num_filters = 16,filter_size = (4,4),stride = (4,4)),
-				MaxPooling2D(),
+				Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3)),
 				Bias(),	
-				Convolution2D(num_filters = 8, filter_size = (3,3),stride = (3,3)),
-				MaxPooling2D(),
+				ReLU(),
+				Convolution2D(num_filters = 64, filter_size = (3,3),stride = (3,3)),
 				Bias(),
-				Convolution2D(num_filters = 4, filter_size = (2,2),stride = (2,2)),
+				ReLU(),
 				MaxPooling2D(),
-				Bias(),
 				FullyConnected(16),
 				Bias(),
 				Sigmoid(),
@@ -58,7 +56,7 @@ net = Sequential((1,28,28),
 num_trials = 1 # how many times we run over the same 10,000 images (epoch)
 
 #TRAINING THE MODEL
-net.batch_gradient_descent(formatted_inputs,formatted_labels,epoch = num_trials,batch_size = 10)#training the mode using stochasatic gradient descent
+net.batch_gradient_descent(formatted_inputs,formatted_labels,epoch = num_trials,batch_size = 32)#training the mode using stochasatic gradient descent
 
 net.save_to_file("digitweight")#after training is complete save the file
 

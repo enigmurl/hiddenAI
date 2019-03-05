@@ -1,7 +1,8 @@
 import pygame
-from sequential import Sequential
+from sequential import * 
 from neat import NEAT
-from layers1D import *
+from hidden import *
+from activations import *
 import random
 
 WIDTH = 800
@@ -37,41 +38,47 @@ class Bird:
 		self.velocity = 0
 		self.score = 0
 		self.alive = True
+		self.can_flap = 0	
 
 	def tick(self,dt,flap = False):
-		self.score += dt
+		if self.alive:
+			self.score += dt
 		self.yvalue += self.velocity * dt
 		if self.yvalue < 0 or self.yvalue > HEIGHT:
 			self.alive = False
 		self.draw()
-		if flap:
+		if flap and self.can_flap <= 0:
 			self.flap()
+			self.can_flap = 1/10
 			return
-		self.velocity += 400 * dt#gravity is 10 pixels per seconds^2
+		self.can_flap -= dt
+		self.velocity += 750 * dt #gravity is 10 pixels per seconds^2
 
 	def draw(self,bird_size = 10,x_center = 200):
 		pygame.draw.rect(SCREEN,(125,0,125),pygame.Rect(x_center-bird_size,self.yvalue-bird_size,bird_size*2,bird_size*2))
 
 	def flap(self):
-		self.velocity = -100
+		self.velocity = -300
 	
 
 num_pillars = 10000
-pillars = [Pillar(500*x + 1000,random.randint(0,HEIGHT-200)) for x in range(num_pillars)]#pillars are spaced 500 apart,and the first is 1000 away from the bird
 num_birds = 50
-model = Sequential(FullyConnected(4,2),Bias(2,2),Sigmoid(),FullyConnected(2,1),Bias(1,1),Sigmoid()) 
+model = Sequential(7,FullyConnected(3),Bias(),Sigmoid(),FullyConnected(2),Bias(),Sigmoid()) 
 neat = NEAT(model,num_per_generation = num_birds)
-all_bird_nets = [Sequential(FullyConnected(4,2),Bias(2,2),Sigmoid()) for _ in range(num_birds)] 
+all_bird_nets = [Sequential(7,FullyConnected(3),Bias(),Sigmoid(),FullyConnected(2),Bias(),Sigmoid()) for _ in range(num_birds)] 
 all_real_birds = [Bird() for _ in range(num_birds)]
 running = True
 clock = pygame.time.Clock()
 gen_num=0
+world_x = 0
 while running:
+	pillars = [Pillar(750*x + 1000,random.randint(0,HEIGHT-200)) for x in range(num_pillars)]#pillars are spaced 500 apart,and the first is 1000 away from the bird
+	print("GENERATION",neat.generation,"WORLD SCORE:",world_x,"MAX SCORE",max([bird.score for bird in all_real_birds]))
 	world_x = 0
-	print(neat.generation)
 	gen_running = True
-	all_real_birds = [Bird() for _ in range(num_birds)]
 	all_bird_nets = neat.new_generation(all_bird_nets,[bird.score for bird in all_real_birds],mutation_max_size = 5)
+	all_real_birds = [Bird() for _ in range(num_birds)]
+	world_score = 0
 	while gen_running:
 		SCREEN.fill((0,0,0))
 		for event in pygame.event.get():
@@ -86,21 +93,24 @@ while running:
 				dead_pillars.append(pillar_num)
 		for pillar_num in dead_pillars:
 			del pillars[pillar_num]
-		first_pillar = pillars[0]
-		dt = clock.tick()/1000
-		world_x += dt* 500
+		first_pillar = pillars[0] 
+		dt = clock.tick(24)/1000
+		world_x += dt* 250
 		alive = 0
 		for bird_num,bird_net in enumerate(all_bird_nets):
 			real_bird = all_real_birds[bird_num]
 			if not real_bird.alive:
 				continue
+			real_bird.score = world_x
 			real_bird.draw()
 			if first_pillar.detect_collision((world_x,real_bird.yvalue)):
 				real_bird.alive = False
 				continue
 			alive += 1
-			result = bird_net.run(np.array([real_bird.yvalue/HEIGHT,min(real_bird.velocity/100,1),(HEIGHT-real_bird.yvalue/HEIGHT),(first_pillar.xvalue-world_x)/WIDTH]))
+			
+			result = bird_net.run(np.array([real_bird.yvalue/HEIGHT,1-real_bird.yvalue/HEIGHT,real_bird.velocity/100,(first_pillar.opening_start)/HEIGHT,1-(first_pillar.opening_start)/HEIGHT,(first_pillar.xvalue-world_x)/1000,real_bird.can_flap]))
 			real_bird.tick(dt,result[0]>result[1])
 		if alive ==0:
 			gen_running = False
-		pygame.display.flip()				
+		pygame.display.flip()			
+neat.save_model_to_file("flappy_bird")	

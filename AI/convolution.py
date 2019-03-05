@@ -17,7 +17,7 @@ class Convolution(Hidden):
 		self.num_input_channels = input_shape[0]
 		self.shape = [num_filters,self.num_input_channels]+ self.filter_size  # needs to be implemented
 		self.weights = 2*np.random.random(self.shape)-1
-		self.padded_shape = self.get_padded_shape() if self.pad else input_shape
+		self.padded_shape = self.get_padded_shape() if self.pad else self.input_shape
 		self.individual_input_shape = self.padded_shape[1:]
 	
 	def get_padded_shape(self):
@@ -35,25 +35,6 @@ class Convolution(Hidden):
 			output_shape.append(dimension_shape)
 		return np.array(output_shape)
 
-	def apply_one_filter(self,filter,input_layer):#should be overrided for optimization, but this will work for any dimension
-		output = []
-		current_place = [0] * self.dimension
-		done = False
-		while not done:
-			done,current_place = self.apply_one_stride(current_place)
-			output# needs to be completed	
-
-	def apply_one_stride(self,current_place):
-		for ind, dimension in enumerate(current_place):
-			real_ind = len(current_place) - ind - 1
-			if dimension + self.stride(real_ind) < self.input_shape(real_ind):
-				current_place[real_ind] += self.stride(real_ind)
-				break
-		else:
-			return True , 0
-		return False, current_place
-
-
 	def run(self,input_layer):
 		output_layer = []
 		for filter in self.weights:
@@ -61,7 +42,6 @@ class Convolution(Hidden):
 		return np.array(output_layer) 
 
 	def derivative(self,input_layer,output_layer_derivative):
-		return self.blank()
 		layer_derivative = []
 		for filter in self.weights:
 			layer_derivative.append(self.derivative_one_filter(filter,input_layer,output_layer_derivative))
@@ -75,8 +55,6 @@ class Convolution(Hidden):
 	
 	def descend(self,derivatives):
 		pre_weights = self.weights - derivatives
-		pre_weights[pre_weights < -1] = -1
-		pre_weights[pre_weights > 1] =  1
 		self.weights = pre_weights 
 	
 class Convolution1D(Convolution):#NEEDS TESTING
@@ -95,36 +73,35 @@ class Convolution1D(Convolution):#NEEDS TESTING
 	def apply_one_filter(self,filter,input_layer):	
 		padded_input_layer = np.zeros(self.padded_shape)#can optimize if pad = false
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1]] = input_layer
-		output_channel = []
+		output_channel = np.zeros(self.output_shape[1:])
 		x_pos = 0
-		while x_pos + self.filter_size[0] <= self.individual_input_shape[0]:# SEE WHAT TO DO 
+		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0],self.stride[0]):
 			slice = np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0]]) 
 			multiplied_average = slice*filter
 			multiplied_sum_average = np.sum(multiplied_average)
-			output_channel.append(multiplied_sum_average)
+			output_channel[x_pos//self.stride[0]] = multiplied_sum_average
 			x_pos += self.stride[0]
 		return output_channel#it will be made into a numpy  array in the run function
 	
-	def derivative_one_filter(self,filter,input_layer,output_layer_derivative):
+	def derivative(self,input_layer,output_layer_derivative):
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1]] = input_layer
-		layer_derivative = np.zeros(self.weights.shape[1:]) 
-		x_pos = 0
-		while x_pos + self.filter_size[0] <= self.individual_input_shape[0]:# SEE WHAT TO DO 
-			slice = np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0]])# * output_layer_derivative[:,x_pos:x_pos + self.filter_size[0]] 
-			layer_derivative[x_pos:x_pos+self.filter_size[0]] += slice * output_layer_derivative[x_pos/self.stride[0]]
-			x_pos += self.stride[0]
-		return layer_derivative 
+		layer_derivative = []
+		for filter_num,filter in enumerate(self.weights):
+			filter_derivative = np.zeros(filter.shape)
+			for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0],self.stride[0]):
+				slice = padded_input_layer[:,x_pos:x_pos + self.filter_size[0]]
+				filter_derivative += slice * output_layer_derivative[filter_num,x_pos//self.stride[0]]
+			layer_derivative.append(filter_derivative)
+		return np.array(layer_derivative)
 
 	def derivative_prev_layer(self,input_layer,output_layer_derivative):
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1]] = input_layer
 		prev_layer_derivative = np.zeros(padded_input_layer.shape)
-		x_pos = 0
-		while x_pos + self.filter_size[0] <= self.individual_input_shape[0]:# SEE WHAT TO DO 
-			for ind,filter in enumerate(self.weights):
-				prev_layer_derivative[:,x_pos:x_pos + self.filter_size[0]] += output_layer_derivative[ind,x_pos//self.stride[0]] * filter
-			x_pos += self.stride[0]
+		for filter_num,filter in enumerate(self.weights):
+			for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0],self.stride[0]):
+				prev_layer_derivative[:,x_pos:x_pos + self.filter_size[0]] += output_layer_derivative[filter_num,x_pos//self.stride[0]] * filter
 		return prev_layer_derivative[:input_layer.shape[0],:input_layer.shape[1]] 
 		
  
@@ -144,32 +121,36 @@ class Convolution2D(Convolution):#NEEDS TESTING
 	def apply_one_filter(self,filter,input_layer):
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer
-		output_channel = []
-		x_pos = 0
-		while x_pos + self.filter_size[0] <= self.individual_input_shape[0]:
-			y_pos = 0
-			output_channel.append([])
-			while y_pos + self.filter_size[1] <= self.individual_input_shape[1]:
+		output_channel = np.zeros(self.output_shape[1:])
+		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0],self.stride[0]):
+			for y_pos in range(0,self.individual_input_shape[1]-self.filter_size[1],self.stride[1]):
 				slice = np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0],y_pos:y_pos + self.filter_size[1]])
 				multiplied_average = slice*filter
 				multiplied_sum_average = np.sum(multiplied_average)
-				output_channel[-1].append(multiplied_sum_average)
-				y_pos += self.stride[1]
-			x_pos += self.stride[0]		
-		return output_channel#it will be made into a numpy array in the run function	
+				output_channel[x_pos//self.stride[0],y_pos//self.stride[1]] = multiplied_sum_average
+		return output_channel
 	
+	def derivative(self,input_layer,output_layer_derivative):
+		padded_input_layer = np.zeros(self.padded_shape)
+		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer
+		layer_derivative = []
+		for filter_num,filter in enumerate(self.weights):
+			filter_derivative = np.zeros(filter.shape)
+			for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0],self.stride[0]):
+				for y_pos in range(0,self.individual_input_shape[1]-self.filter_size[1],self.stride[1]):
+					slice = padded_input_layer[:,x_pos:x_pos + self.filter_size[0],y_pos:y_pos + self.filter_size[1]]
+					filter_derivative += slice * output_layer_derivative[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]]
+			layer_derivative.append(filter_derivative)
+		return np.array(layer_derivative)
+
 	def derivative_one_filter(self,filter,input_layer,output_layer_derivative):
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer
 		layer_derivative = np.zeros(filter.shape)
-		x_pos = 0
-		while x_pos + self.filter_size[0] <= self.individual_input_shape[0]:
-			y_pos = 0
-			while y_pos + self.filter_size[1] <= self.individual_input_shape[1]:
+		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0],self.stride[0]):
+			for y_pos in range(0,self.individual_input_shape[1]-self.filter_size[1],self.stride[1]):
 				slice = np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0]])# * output_layer_derivative[:,x_pos:x_pos + self.filter_size[0]] 
 				layer_derivative[x_pos:x_pos+self.filter_size[0],y_pos:y_pos + self.filter_size[1]] += slice * output_layer_derivative[x_pos/self.stride[0],y_pos/self.stride[1]]
-				y_pos += self.stride[1] 
-			x_pos += self.stride[0]
 		return layer_derivative
 	
 	def derivative_prev_layer(self,input_layer,output_layer_derivative):
@@ -217,4 +198,22 @@ class Convolution3D(Convolution):
 				y_pos += self.stride[1]
 			x_pos += self.stride[0]		
 		return output_channel#it will be made into a numpy array in the run function
-
+if __name__ == "__main__":
+	from loss import *
+	a = np.array([[4.0,5.0,-2.0,3.5,10.0,-2.0]])
+	con = Convolution1D()
+	con.init_input_shape((1,6))
+	bsize=  100
+	print(con.weights)
+	for i in range(bsize):
+		pre_error = con.run(a)
+		target = [2.75,3.125,-4]
+		after_error = mean_squared_loss(pre_error,np.array(target))
+		derivative1 = derivative_mean_squared_loss(pre_error,np.array(target),batch_size = 50)
+		derivative2 = con.derivative_prev_layer(a,derivative1)
+		derivative3 = con.derivative(a,derivative1)
+		#a -= derivative2
+		con.descend(derivative3)
+	print(con.weights)
+	con.weights = [[[-0.25,0.75]]]	
+	print(con.run(a))

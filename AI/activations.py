@@ -52,13 +52,16 @@ class  Activation:
 class Sigmoid(Activation): #TESTED
 	def __init__(self):
 		super().__init__()
+		self.config = {"dimension":"ANY","type":"ACTIVATION"}
 			
 	def run(self,input_layer):#apply and derivative arent needed as this is more efficient
+		input_layer[input_layer>30] = 30
+		input_layer[input_layer<-30] = -30
 		return 1/(1+np.exp(-input_layer))
 	
-	def derivative_prev_layer(self,input_layer,output_layer_derivatives):
-		partD = self.run(input_layer)
-		return partD * (1-partD) * output_layer_derivatives
+	def derivative_prev_layer(self,input_layer,output_layer_derivative):
+		partial_derivative = self.run(input_layer)
+		return partial_derivative * (1-partial_derivative) * output_layer_derivative
 
 class BinaryStep(Activation): #TESTED
 	def __init__(self):
@@ -73,10 +76,17 @@ class BinaryStep(Activation): #TESTED
 class ReLU(Activation): #TESTED 
 	def __init__(self):
 		super().__init__()
+		self.config = {"dimension":"ANY","type":"ACTIVATION"}
 
-	#def run(self,input_layer):
-	#	output_layer = input_layer.copy()
-	#	output_layer[
+	def run(self,input_layer):
+		output_layer = np.zeros(self.output_shape) 
+		output_layer[input_layer>0] = input_layer[input_layer>0]
+		return output_layer
+
+	def derivative_prev_layer(self,input_layer,output_layer_derivative):
+		prev_layer_derivative = np.zeros(self.input_shape)
+		prev_layer_derivative[input_layer>0] = output_layer_derivative[input_layer>0]
+		return prev_layer_derivative 
 
 	def apply(self,x):
 		return max(0,x)
