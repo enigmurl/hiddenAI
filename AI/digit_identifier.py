@@ -3,12 +3,15 @@ from convolution import *
 from activations import *
 from hidden import *
 from pooling import *
+import loss
+from dropout import Dropout
 from mnist import  MNIST
 import time
 import random
 import numpy as np
 
 def printIm(img):#prints a representation of the digit
+	new_img = [img[i*28:28*(i+1)] for i in range(28)]
 	for preLine in img[0]:
 		newLine = ["#" if val>0 else "." for val in preLine]
 		print(" ".join(newLine))
@@ -27,7 +30,7 @@ for ind in range(num_data):
 	formatted_inputs.append(new_image)
 #INITIATING THE MODEL
 '''
-#net = Sequential((784),
+net = Sequential((784),
 				FullyConnected(16),
 				Bias(),#
 				Sigmoid(),
@@ -36,31 +39,53 @@ for ind in range(num_data):
 				Sigmoid(),
 				FullyConnected(10),
 				Bias(),
-				Sigmoid())'''
+				Softmax(),loss = loss.CrossEntropy())
+'''
 net = Sequential((1,28,28),
 				Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3)),
 				Bias(),	
-				ReLU(),
+				ReLU(),	
+				MaxPooling2D(),
+				Dropout(0.5),
 				Convolution2D(num_filters = 64, filter_size = (3,3),stride = (3,3)),
 				Bias(),
 				ReLU(),
 				MaxPooling2D(),
 				FullyConnected(16),
 				Bias(),
-				Sigmoid(),
+				RReLU(),
+				Dropout(0.2),
 				FullyConnected(10),
 				Bias(),
-				Sigmoid())
-				
+				Softmax())
 #net.open_from_file("digitweight")# open up from digitweight a pre trained model
 num_trials = 1 # how many times we run over the same 10,000 images (epoch)
 
 #TRAINING THE MODEL
-net.batch_gradient_descent(formatted_inputs,formatted_labels,epoch = num_trials,batch_size = 32)#training the mode using stochasatic gradient descent
-
+score = 0
+for i in range(25):
+	a = random.randint(0,num_data-1)
+	correct = labels[a]
+	result = net.run(formatted_inputs[a])
+	maxresult = 0
+	max_ind = 0
+	for ind,val in enumerate(result):
+		if val>= maxresult:
+			max_ind = ind
+			maxresult = val
+	maxresult2 = 0
+	print(net.training_run(formatted_inputs[a])[10])
+	#printIm(formatted_inputs[a])
+	print("ACTUAL,MACHINE:",correct,max_ind,result)
+	if correct == max_ind:	
+		score+=1
+		print('correct')
+#print([lyer for lyer in net.weighted_layers])
+print("SCORE:",score*4,"TOTAL TIME:",time.time()-start_data)
+net.batch_gradient_descent(formatted_inputs,formatted_labels,learning_rate = 0.01,momentum = 0.8,decay = 0 ,epoch = num_trials,batch_size = 10)#training the mode using stochasatic gradient descent
 net.save_to_file("digitweight")#after training is complete save the file
-
 #ASSESING THE MODEL
+
 score = 0
 for i in range(100):
 	a = random.randint(0,num_data-1)
@@ -73,9 +98,10 @@ for i in range(100):
 			max_ind = ind
 			maxresult = val
 	maxresult2 = 0
-	printIm(formatted_inputs[a])
+	#printIm(formatted_inputs[a])
 	print("ACTUAL,MACHINE:",correct,max_ind,result)
 	if correct == max_ind:	
 		score+=1
 		print('correct')
+#print([lyer for lyer in net.weighted_layers])
 print("SCORE:",score,"TOTAL TIME:",time.time()-start_data)

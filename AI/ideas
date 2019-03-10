@@ -1,1 +1,12 @@
 have a network match something with a state and action
+
+ACTION PLANNING NETWORK:
+	first nn:
+	input is the current state
+	outputs an N number of neuron, N must be a square number
+	Then, it makes the output into a matrix with dimensions root N and root N, that is called M0
+	Then, based on the Parameter P, it factors it into P sub matrices that are exponents of M0, for example p =3, then it would be M0^1/6,M0^1/3,M0^1/2,find the pattern
+	second nn:
+	input is the first of the output matrices, so for p = 3, M0^1/6
+	it outputs a one hot vector of what to do,(may not be a one hot vector though)
+	

@@ -33,7 +33,7 @@ class  Activation:
 	def apply(self,x):
 		pass# to be implemented in subclasses
 
-	def derivative_prev_layer(self,input_layer,output_layer_derivative):
+	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
 		return np.array([self.derivative(val) for val in input_layer]) * output_layer_derivative
 		'''
 		formatted_input_layer = np.reshape(input_layer,self.total_items) if self.dimension != 1 else input_layer	
@@ -55,11 +55,10 @@ class Sigmoid(Activation): #TESTED
 		self.config = {"dimension":"ANY","type":"ACTIVATION"}
 			
 	def run(self,input_layer):#apply and derivative arent needed as this is more efficient
-		input_layer[input_layer>30] = 30
-		input_layer[input_layer<-30] = -30
-		return 1/(1+np.exp(-input_layer))
+		input_clipped_layer = np.clip(input_layer,-30,30)
+		return 1/(1+np.exp(-input_clipped_layer))
 	
-	def derivative_prev_layer(self,input_layer,output_layer_derivative):
+	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
 		partial_derivative = self.run(input_layer)
 		return partial_derivative * (1-partial_derivative) * output_layer_derivative
 
@@ -83,7 +82,7 @@ class ReLU(Activation): #TESTED
 		output_layer[input_layer>0] = input_layer[input_layer>0]
 		return output_layer
 
-	def derivative_prev_layer(self,input_layer,output_layer_derivative):
+	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
 		prev_layer_derivative = np.zeros(self.input_shape)
 		prev_layer_derivative[input_layer>0] = output_layer_derivative[input_layer>0]
 		return prev_layer_derivative 
@@ -94,10 +93,21 @@ class ReLU(Activation): #TESTED
 	def derivative(self,x):
 		return 1 if x >= 0 else 0  
 
-class PReLU(Activation): #TESTED
+class RReLU(Activation): #TESTED
 	def __init__(self,multiplier = 1/5):
 		super().__init__()
+		self.config = {"dimension":"ANY","type":"ACTIVATION"}
 		self.multiplier = multiplier
+	
+	def run(self,input_layer):
+		output_layer = self.multiplier * input_layer  
+		output_layer[input_layer>0] = input_layer[input_layer>0]
+		return output_layer
+
+	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
+		prev_layer_derivative = output_layer_derivative
+		prev_layer_derivative[input_layer<0] *= self.multiplier 
+		return prev_layer_derivative 
 	
 	def apply(self,x):
 		return x if x>= 0 else self.multiplier*x
@@ -126,7 +136,24 @@ class Softplus(Activation): #TESTED
 	def derivative(self,x):
 		return 1/(1+math.e**-x) if abs(x) < 30 else 0 if x < -30 else 1
 
-		
+class Softmax(Activation):
+	def __init__(self):
+		super().__init__()
+
+	def run(self,input_layer):
+		exponent_values = np.exp(input_layer - np.max(input_layer))
+		total_sum = np.sum(exponent_values)
+		return exponent_values/total_sum
+	
+	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
+		exponent_values = np.exp(input_layer - np.max(input_layer))
+		total_sum = np.sum(exponent_values)
+		prev_layer_derivative = []
+		for ind,val in enumerate(exponent_values):
+			sum_without_val = total_sum - val
+			prev_layer_derivative.append(output_layer_derivative[ind] * (sum_without_val*val)/(total_sum**2))
+		return prev_layer_derivative
+	
 class Tanh(Activation): #TESTED hyperbolic tangent
 	def __init__(self):
 		super().__init__()
@@ -147,5 +174,17 @@ class Arctan(Activation): #
 	def derivative(self,x):
 		return 1/(x**2+1)
 
+if __name__ == "__main__":
+	from loss import *
+	a = Softmax() 
+	los = CrossEntropy()
+	b = np.array([0.,1.,2.,3.])
+	target = np.array([0,1,0,0])
+	print("FIRST:",a.run(b))
+	for i in range(100):
+		run = a.run(b)
+		losd = los.derivative_prev_layer(run,target)
+		b -= a.derivative_prev_layer(b,losd)
+		print(a.run(b))
 	
 #May want to add pooling

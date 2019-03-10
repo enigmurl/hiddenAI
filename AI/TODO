@@ -1,6 +1,6 @@
-Finish NEAT---- complete 
-	Make example folder(needs to work actuall) 
-	documentation folder.
+LIBRARY
+	1)Make example folder(needs to work actuall) 
+	2)documentation folder.
 PRIORITIES
 	1)CNNS,RNNS,GANs
 	2)q Learnings
@@ -8,14 +8,22 @@ PRIORITIES
 	4)linear regression, decision tree 
 	5)finish up pooling(the numpythonic way, and average pooling) 
 
-
 FEATURES
 	1)KWARGS: starting_value,padding or not
 	2) Make descents optimizers, also add more losses and regulizers
+	3)learning rate a class
 
 TESTING
 	1)Test all layers
 
-STUFF TO CONFIRM
-	1)Values of a cnn kernel(-1 to 1 only?)
-	2)Is the name filter_size or kernel_size 
+RESEARCH
+	1)What is Dropout,Momentum,Decay,(Fix regularization)?
+	2)Values of a cnn kernel(-1 to 1 only?), is momentum only for SGD
+	3)Is the name filter_size or kernel_size 
+	4)Are iterations num batches or num total or what
+BUGS
+	1)FIX PADING IN CNNS( Convolution approaching 0.5 for all values, possibly bc of some values just staying at 0#LOOKS LIKE IT IS FIXED) 
+	2) regularization
+
+OPTIMIZATION
+	1)Convolutions, Max/Avg Pooling

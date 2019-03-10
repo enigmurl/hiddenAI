@@ -1,4 +1,5 @@
 import numpy as np
+import math
 from numpy.lib.stride_tricks import as_strided
 
 
@@ -6,30 +7,42 @@ class Pooling:
 	def __init__(self):
 		self.config = {"type":"POOLING","dimension":1}
 
-	def get_padded_input_shape(self):
-		padded_input_shape = list(self.input_shape)
-		for ind,dimension in enumerate(padded_input_shape[1:]):
-			offset =  (dimension-self.pooling_size[ind]) % self.stride[ind]
-			padded_input_shape[ind+1] = dimension + offset
-		return padded_input_shape
+	def get_padded_input_shape(self):#NEEDS WORK
+		padded_shape = list(self.input_shape)
+		for ind,dimension in enumerate(padded_shape[1:]):
+			#offset =  (dimension - self.pooling_size[ind]) %  (self.stride[ind]) - 1
+			#padded_dimension = max(self.pooling_size[ind],dimension + offset) 
+			current = self.pooling_size[ind]
+			start = self.pooling_size[ind]
+			while dimension > start:
+				current += self.stride[ind]
+				dimension -= self.stride[ind] 
+		
+			#mimimum = max(start,dimension)
+			#padded_dimension = max(0,math.ceil((dimension - start + 1)/self.stride[ind])) + start
+			padded_dimension = current	 
+			padded_shape[ind+1] = padded_dimension
+		#print(padded_shape)
+		return padded_shape
+	
+	def compute_output_shape(self,padded_shape):
+		output_shape = [padded_shape[0]]
+		for ind,dimension in enumerate(padded_shape[1:]):
+			offset =  (dimension - self.pooling_size[ind]) % self.stride[ind]
+			dimension_shape = math.ceil((dimension - self.pooling_size[ind] + 1) / self.stride[ind])
+			output_shape.append(dimension_shape)
+		return np.array(output_shape)
 	
 	def init_input_shape(self,input_shape):
 		self.input_shape = input_shape if hasattr(input_shape,"__iter__") else [input_shape]
-		self.output_shape = self.compute_output_shape(self.input_shape)	
 		self.padded_input_shape = self.get_padded_input_shape() if self.pad else self.input_shape
-	
-	def compute_output_shape(self,input_shape):
-		output_shape = [input_shape[0]]
-		for ind,dimension in enumerate(input_shape[1:]):
-			offset =  (dimension - self.pooling_size[ind]) % self.stride[ind]
-			dimension_shape = (dimension + offset) // self.stride[ind]
-			output_shape.append(dimension_shape)
-		return np.array(output_shape)
+		self.output_shape = self.compute_output_shape(self.padded_input_shape)	
+		#print(self.padded_input_shape)	
 
 	def run(self,input_layer): 
 		pass # to be overided
 	
-	def derivative_prev_layer(self,input_layer,output_layer_derivative):
+	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
 		pass
 
 class MaxPooling1D(Pooling):
@@ -37,12 +50,12 @@ class MaxPooling1D(Pooling):
 		super().__init__()
 		self.config = {"type":"POOLING","dimension":2}
 		self.pad = pad
-		self.pooling_size = pooling_size 
-		self.stride = stride
+		self.pooling_size = pooling_size if hasattr(pooling_size,"__iter__") else [pooling_size] 
+		self.stride = stride if hasattr(stride,"__iter__") else [stride]
 	
 	def run(self,input_layer): 
-		padded_input_layer = np.full(self.padded_input_shape,np.nan)
-		padded_input_layer[:self.input_shape[0],:self.input_shape[1]] = input_layer
+		#padded_input_layer = np.full(self.padded_input_shape,np.nan)
+		#padded_input_layer[:self.input_shape[0],:self.input_shape[1]] = input_layer
 		output_layer = np.zeros(self.output_shape)
 		for channel_num in range(self.padded_input_shape[0]):
 			x_pos = 0
@@ -57,7 +70,7 @@ class MaxPooling1D(Pooling):
 			'''
 		return output_layer	
 		
-	def derivative_prev_layer(self,input_layer, output_layer_derivative):
+	def derivative_prev_layer(self,input_layer, output_layer_derivative,**kwargs):
 		padded_input_layer = np.full(self.padded_input_shape,np.nan)
 		padded_input_layer[:self.input_shape[0],:self.input_shape[1]] = input_layer
 		prev_layer_derivative = np.zeros(self.input_shape)
@@ -77,8 +90,8 @@ class MaxPooling2D(Pooling):
 		super().__init__()
 		self.config = {"type":"POOLING","dimension":3}
 		self.pad = pad
-		self.pooling_size = pooling_size 
-		self.stride = stride
+		self.pooling_size = pooling_size if hasattr(pooling_size,"__iter__") else [pooling_size] 
+		self.stride = stride if hasattr(stride,"__iter__") else [stride]
 
 	def run(self,input_layer): 
 		output_layer = np.zeros(self.output_shape)
@@ -101,7 +114,7 @@ class MaxPooling2D(Pooling):
 			'''
 		return output_layer	
 		
-	def derivative_prev_layer(self,input_layer,output_layer_derivative):
+	def derivative_prev_layer(self,input_layer, output_layer_derivative,**kwargs):
 		prev_layer_derivative = np.zeros(self.input_shape)
 		for channel_num in range(self.padded_input_shape[0]):
 			x_pos = 0 	
@@ -109,7 +122,7 @@ class MaxPooling2D(Pooling):
 				y_pos = 0	
 				while y_pos + self.pooling_size[1] <= self.padded_input_shape[2]: 
 					input_slice = input_layer[channel_num,x_pos:self.pooling_size[0]+ x_pos,y_pos:self.pooling_size[1] + y_pos]
-					max_value = np.max(input_layer[channel_num,x_pos:self.pooling_size[0]+ x_pos,y_pos:self.pooling_size[1] + y_pos])
+					max_value = np.max(input_slice)
 					slice = prev_layer_derivative[channel_num,x_pos:self.pooling_size[0] + x_pos,y_pos:self.pooling_size[1] + y_pos]
 					slice[input_slice==max_value] += output_layer_derivative[channel_num,x_pos//self.stride[1],y_pos//self.stride[1]]
 					y_pos += self.stride[1] 
