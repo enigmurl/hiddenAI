@@ -21,7 +21,7 @@ class Convolution(Hidden):
 		output_num_neurons = 1
 		for neuron in self.input_shape:
 			input_num_neurons *= neuron
-		for neuron in self.output_shape[1:]:
+		for neuron in self.output_shape:
 			output_num_neurons *= neuron
 		
 		starting_value = -((6/(input_num_neurons + output_num_neurons))**0.5)

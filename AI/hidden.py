@@ -61,7 +61,8 @@ class FullyConnected(Hidden):#TESTED
 	def init_input_shape(self,input_shape):
 		super().__init__(input_shape,self.output_shape)	
 		#self.weights = np.random.randn(self.output_shape[0],self.input_shape[0])
-		self.weights = np.random.uniform(-1,1, size =(self.output_shape[0],self.input_shape[0]))
+		starting_value = -((6/(self.input_shape[0] + self.output_shape[0]))**0.5)
+		self.weights = np.random.uniform(starting_value,-starting_value, size =(self.output_shape[0],self.input_shape[0]))
 		self.num_weights = self.input_shape[0]*self.output_shape[0]
 	
 	def compute_output_shape(self):

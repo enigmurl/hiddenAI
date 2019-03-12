@@ -9,6 +9,7 @@ from mnist import  MNIST
 import time
 import random
 import numpy as np
+import optimizers
 
 def printIm(img):#prints a representation of the digit
 	new_img = [img[i*28:28*(i+1)] for i in range(28)]
@@ -46,18 +47,19 @@ net = Sequential((1,28,28),
 				Bias(),	
 				ReLU(),	
 				MaxPooling2D(),
-				Dropout(0.5),
+				#Dropout(0.5),
 				Convolution2D(num_filters = 64, filter_size = (3,3),stride = (3,3)),
 				Bias(),
 				ReLU(),
 				MaxPooling2D(),
-				FullyConnected(16),
+				FullyConnected(128),
 				Bias(),
-				RReLU(),
-				Dropout(0.2),
+				ReLU(),
+				#Sigmoid(),
+				#Dropout(0.2),
 				FullyConnected(10),
 				Bias(),
-				Softmax())
+				Softmax(),optimizer = optimizers.BatchGradientDescent(16,momentum = 0.9))
 #net.open_from_file("digitweight")# open up from digitweight a pre trained model
 num_trials = 1 # how many times we run over the same 10,000 images (epoch)
 
@@ -74,7 +76,8 @@ for i in range(25):
 			max_ind = ind
 			maxresult = val
 	maxresult2 = 0
-	print(net.training_run(formatted_inputs[a])[10])
+	for ind,layer in enumerate(net.training_run(formatted_inputs[a])[11:]):
+		print(net.training_layers[ind+10],layer)
 	#printIm(formatted_inputs[a])
 	print("ACTUAL,MACHINE:",correct,max_ind,result)
 	if correct == max_ind:	
@@ -82,7 +85,7 @@ for i in range(25):
 		print('correct')
 #print([lyer for lyer in net.weighted_layers])
 print("SCORE:",score*4,"TOTAL TIME:",time.time()-start_data)
-net.batch_gradient_descent(formatted_inputs,formatted_labels,learning_rate = 0.01,momentum = 0.8,decay = 0 ,epoch = num_trials,batch_size = 10)#training the mode using stochasatic gradient descent
+net.train(formatted_inputs,formatted_labels,epoch = num_trials)#training the mode using stochasatic gradient descent
 net.save_to_file("digitweight")#after training is complete save the file
 #ASSESING THE MODEL
 
@@ -97,6 +100,8 @@ for i in range(100):
 		if val>= maxresult:
 			max_ind = ind
 			maxresult = val
+	#for ind,layer in enumerate(net.training_run(formatted_inputs[a])[11:]):
+		#print(net.training_layers[ind+10],layer)
 	maxresult2 = 0
 	#printIm(formatted_inputs[a])
 	print("ACTUAL,MACHINE:",correct,max_ind,result)

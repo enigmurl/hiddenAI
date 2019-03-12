@@ -10,9 +10,10 @@ class Dropout:
 		self.output_shape = input_shape	
 
 	def run(self,input_layer):
-		self.mask = np.random.choice((True,False),size = self.input_shape, p = [self.probability,1-self.probability] )#see if this needs to be switched,mask may be  self bc we need it for derivative_prev_layer
-		input_layer[self.mask] = 0
-		return input_layer
+		self.mask = np.random.choice((False,True),size = self.input_shape, p = [self.probability,1-self.probability] )#see if this needs to be switched,mask may be  self bc we need it for derivative_prev_layer
+		output_layer = np.zeros(self.input_shape)
+		output_layer[self.mask] = input_layer[self.mask]
+		return output_layer
 			
 	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
 		prev_layer_derivative = output_layer_derivative[:]

@@ -2,7 +2,10 @@ LIBRARY
 	1)Make example folder(needs to work actuall) 
 	2)documentation folder.
 PRIORITIES
-	1)CNNS,RNNS,GANs
+	1)Different nets:
+		CNNS,need to optimize, add the different types of convolutional layers,(deconvolutional)
+		GANs,make the training use the optimizers of the layers rather than how it is right now, may need to rework optimizers for this, or add a convertor
+		RNNS need to implement
 	2)q Learnings
 	3)other types of training(the one on computerfile for face recognition)
 	4)linear regression, decision tree 

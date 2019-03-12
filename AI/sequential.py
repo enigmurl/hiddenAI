@@ -2,13 +2,14 @@ from convertors import *
 import loss
 import pickle
 import regulizers
-from progress_bar import ProgressBar
+import optimizers
 
 class Sequential:
-	def __init__(self,input_shape,*layers,loss = loss.MeanSquaredLoss(),regulizer = regulizers.Ridge(1/10)):
+	def __init__(self,input_shape,*layers,loss = loss.MeanSquaredLoss(),regulizer = regulizers.Ridge(1/10),optimizer = optimizers.BatchGradientDescent()):
 		self.layers = self.compile_layers(input_shape,layers)
 		self.regulizer = regulizer
 		self.loss = loss
+		self.optimizer = optimizer
 	
 	def compile_layers(self,input_shape,layers):
 		output_shape = input_shape if hasattr(input_shape,"__iter__") else [input_shape]
@@ -77,88 +78,12 @@ class Sequential:
 			all_values.append(current_value)
 		return all_values		
 		
-	def batch_data(self,training_data,batch_size):
-		batched_data = []
-		if len(training_data)%batch_size !=0:
-			for ind in range (len(training_data)//batch_size +1):
-				batched_data.append(training_data[ind*batch_size:batch_size*(ind+1)])
-		else:
-			for ind in range (len(training_data)//batch_size):
-				batched_data.append(training_data[ind*batch_size:batch_size*(ind+1)])
-		return batched_data
-	
-	def descend(self,weight_gradients): #weight_gradient is a dictionary of {layer:gradient,layer2:gradient2....}
-		for ind,gradient in enumerate(weight_gradients):
-			self.weighted_layers[ind].descend(gradient)
-	
-	def compute_loss_derivative(self,all_layers,expected_output,loss_derivative_function,batch_size = 1):
-		end_derivative = loss_derivative_function(all_layers[-1],expected_output,batch_size=batch_size)
-		return end_derivative	
 
-	def derive_one_data(self,weight_gradients,current_derivative,all_layers):
-		weighted_num = -1
-		for ind,layer in enumerate(self.training_layers[::-1]):
-			input_layer = all_layers[len(self.training_layers)-ind-1]
-			if hasattr(layer,"weights"): #if it has weights
-				layer_derivative = layer.derivative(input_layer,current_derivative)
-				weight_gradients[weighted_num] += layer_derivative 
-				weighted_num -= 1
-			if ind != len(self.layers)-1:
-				current_derivative = layer.derivative_prev_layer(input_layer,current_derivative)
-				#print("POST:",layer,current_derivative)
-		return weight_gradients
+	def train(self,input_data,expected_outputs,epoch = 1,print_epochs = True):
+		loss_function_derivative = self.loss.derivative_prev_layer
+		self.training_layers = self.optimizer.train(input_data,expected_outputs,epoch,self.training_layers,self.training_run,loss_function_derivative,self.regulizer,print_epochs = print_epochs)
+		return
 
-	def derive_and_descend_one_data(self,current_derivative,all_layers):
-		for ind,layer in enumerate(self.training_layers[::-1]):
-			input_layer = all_layers[len(self.training_layers)-ind-1]
-			if hasattr(layer,"weights"): #if it has weights
-				layer_derivative = layer.derivative(input_layer,current_derivative)
-				#regularized_layer_derivative = self.regulizer.apply_derivative(layer.weights,layer_derivative)
-				layer.descend(layer_derivative)
-			if ind != len(self.layers)-1:
-				current_derivative = layer.derivative_prev_layer(input_layer,current_derivative)
-
-		
-	def blank_weights(self):		
-		weight_gradients = []
-		for layer in self.weighted_layers:
-			weight_gradients.append(layer.blank())
-		return weight_gradients
-
-	def batch_gradient_descent(self,input_data,expected_outputs,epoch = 1,momentum = 0,decay = 0,batch_size = 5,learning_rate = 0.1,print_epochs = True):
-		loss_function_derivatives = self.loss.derivative_prev_layer
-
-		training_data = list(zip(input_data,expected_outputs))
-		batched_data = self.batch_data(training_data,batch_size)
-		last_weight_gradients = self.blank_weights() 
-		iterations = 0
-		for epoch_num in range(epoch):
-			if print_epochs:
-				progress_bar = ProgressBar(start_message ="EPOCH NUM " + str(epoch_num) + " ",total = len(training_data), total_chars = 100)
-			for batch_num,batch in enumerate(batched_data):
-				weight_gradients = self.blank_weights()			
-				for data in batch:
-					expected = data[1]
-					all_layers = self.training_run(data[0])
-					#for lyer in all_layers:
-					#	print(lyer)
-					current_derivative = self.compute_loss_derivative(all_layers,expected,loss_function_derivatives,batch_size = len(batch))
-					#print(current_derivative)
-					weight_gradients = self.derive_one_data(weight_gradients,current_derivative,all_layers)	#see if we need to make it self	
-					if print_epochs:
-						progress_bar.update()
-				#weight_gradients = [self.regulizer.apply_derivative(self.weighted_layers[layer_num].weights,layer_derivative) for layer_num,layer_derivative in enumerate(weight_gradients)] 
-				iterations += 1
-				current_learning_rate = learning_rate/(1 + decay * iterations)	
-				gradient_with_momentum = [momentum * (last_weight_gradients[layer_num]) +  current_learning_rate * layer_gradients for layer_num,layer_gradients in enumerate(weight_gradients)]
-				self.descend(gradient_with_momentum)
-				last_weight_gradients = weight_gradients[:]
-
-	
-
-		
-
-	
 
 if __name__ == "__main__":
 	import time
@@ -174,18 +99,19 @@ if __name__ == "__main__":
 	a = Sequential((1,3,3),
 				Convolution2D(num_filters = 3,filter_size = (2,2),stride = (2,2)),
 				Bias(),
-				#ELU(),
+				ReLU(),
 				#Dropout(0.2),
 				MaxPooling2D(pooling_size = [2,2]),
 				Convolution2D(num_filters = 2,filter_size = (3,3),stride = (2,2)),
 				Bias(),
+				ReLU(),
 				##ELU(),
 				#Dropout(0.5),
 				MaxPooling2D(pooling_size  = [2,2]),
 				FullyConnected(2),
 				Bias(),
-				Softmax())
-	print(a.layers[0].weights,a.layers[3].weights)
+				Sigmoid())
+	print(a.layers[0].weights,a.layers[4].weights)
 	time.sleep(1)
 	'''
 	a = Sequential((9),
@@ -214,7 +140,7 @@ if __name__ == "__main__":
 		for ind,data in enumerate(trainingData):
 			b = a.run(data)
 			print("RESULT:",i,b,"EXPECTED RESULT",labels[ind])
-		a.batch_gradient_descent(trainingData,labels,learning_rate = 0.001,epoch = numData,decay = 0,momentum = 0.9,batch_size= 16,print_epochs = False)
+		a.train(trainingData,labels,epoch = numData,print_epochs = False)
 		print("\n")
 	for ind,data in enumerate(trainingData):
 		print("_______ \n")

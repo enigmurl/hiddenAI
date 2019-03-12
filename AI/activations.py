@@ -79,6 +79,7 @@ class ReLU(Activation): #TESTED
 
 	def run(self,input_layer):
 		output_layer = np.zeros(self.output_shape) 
+		#print(input_layer>0,input_layer[input_layer>0])	
 		output_layer[input_layer>0] = input_layer[input_layer>0]
 		return output_layer
 
