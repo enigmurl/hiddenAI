@@ -14,7 +14,6 @@ class GAN(Sequential):
 	def train(self,real_data,real_data_output = np.array([0,1]),generated_data_output = np.array([1,0])):# MAKE THIS INCLUDE THE OPTIMIZERS BETTER
 		discriminator_weighted_layers = self.discriminator.weighted_layers
 		generator_weighted_layers = self.generator.weighted_layers
-		print(generator_weighted_layers)
 		self.generator.optimizer.last_gradients = self.generator.optimizer.blank_weights(generator_weighted_layers)
 		print("first:",self.generator.optimizer.last_gradients)
 		self.discriminator.optimizer.last_gradients = self.discriminator.optimizer.blank_weights(discriminator_weighted_layers)
