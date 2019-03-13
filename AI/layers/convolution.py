@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import random
-from hidden import Hidden
+from layers.hidden import Hidden
 
 class Convolution(Hidden):
 	def __init__(self,input_shape = None,num_filters = 1,filter_size = (2) , stride = (2)):
@@ -217,7 +217,7 @@ class Convolution3D(Convolution):
 			x_pos += self.stride[0]		
 		return output_channel#it will be made into a numpy array in the run function
 if __name__ == "__main__":
-	from loss import *
+	from ..loss import *
 	a = np.array([[4.0,5.0,-2.0,3.5,10.0,-2.0]])
 	con = Convolution1D()
 	con.init_input_shape((1,6))

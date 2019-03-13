@@ -1,10 +1,11 @@
 from sequential import Sequential 
-from convolution import *
-from activations import *
-from hidden import *
-from pooling import *
+from layers.convolution import *
+from layers.activations import *
+from layers.hidden import *
+from layers.pooling import *
+from layers.dropout import Dropout
+import learning_rates
 import loss
-from dropout import Dropout
 from mnist import  MNIST
 import time
 import random
@@ -19,7 +20,7 @@ def printIm(img):#prints a representation of the digit
 start_data = time.time()
 mndata = MNIST('digitdata')
 images,labels = mndata.load_training()
-num_data = 10000# of the 60,000 images in the MNIST database, how many do we want to use
+num_data = 5000# of the 60,000 images in the MNIST database, how many do we want to use
 formatted_inputs = []
 formatted_labels = []
 for ind in range(num_data):
@@ -42,6 +43,7 @@ net = Sequential((784),
 				Bias(),
 				Softmax(),loss = loss.CrossEntropy())
 '''
+learning_rate = learning_rates.DecayLearningRate(0.1,1)
 net = Sequential((1,28,28),
 				Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3)),
 				Bias(),	
@@ -59,9 +61,9 @@ net = Sequential((1,28,28),
 				#Dropout(0.2),
 				FullyConnected(10),
 				Bias(),
-				Softmax(),optimizer = optimizers.BatchGradientDescent(16,momentum = 0.9))
+				Softmax(),optimizer = optimizers.BatchGradientDescent(16,momentum = 0.9,learning_rate = learning_rate))
 #net.open_from_file("digitweight")# open up from digitweight a pre trained model
-num_trials = 1 # how many times we run over the same 10,000 images (epoch)
+num_trials = 2 # how many times we run over the same 10,000 images (epoch)
 
 #TRAINING THE MODEL
 score = 0

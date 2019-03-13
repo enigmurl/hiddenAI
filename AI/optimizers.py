@@ -1,15 +1,17 @@
 from progress_bar import ProgressBar
 import learning_rates
+import random
 
 class BatchGradientDescent:
 	def __init__(self,batch_size = 5,momentum = 0,learning_rate = learning_rates.ConstantLearningRate(0.1)):
+		print("reinitialized")
+		self.seed = random.random()
 		self.momentum = momentum 
 		self.learning_rate = learning_rate
 		self.batch_size = batch_size
 		self.iterations = 0
 	
 	def descend(self,weight_gradients,weighted_layers): #
-		self.iterations += 1
 		current_learning_rate = self.learning_rate.next_learning_rate(self.iterations)
 		gradient_with_momentum = [self.momentum * (self.last_gradients[layer_num]) +  current_learning_rate * layer_gradients for layer_num,layer_gradients in enumerate(weight_gradients)]
 		for ind,gradient in enumerate(gradient_with_momentum):
@@ -61,7 +63,7 @@ class BatchGradientDescent:
 		training_data = list(zip(input_data,expected_outputs))
 		batched_data = self.batch_data(training_data,self.batch_size)
 		self.last_gradients = self.blank_weights(weighted_layers) 
-		iterations = 0
+		self.iterations = 0
 
 		for epoch_num in range(epoch):
 			if print_epochs:
@@ -77,4 +79,5 @@ class BatchGradientDescent:
 						progress_bar.update()
 				#weight_gradients = [regulizer.apply_derivative(self.weighted_layers[layer_num].weights,layer_derivative) for layer_num,layer_derivative in enumerate(weight_gradients)] 
 				self.descend(weight_gradients,weighted_layers)
+			self.iterations += 1
 		return training_layers		

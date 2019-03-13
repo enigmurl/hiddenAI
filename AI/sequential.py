@@ -1,11 +1,11 @@
-from convertors import *
-import loss
+from layers.convertors import *
 import pickle
+import loss
 import regulizers
 import optimizers
 
 class Sequential:
-	def __init__(self,input_shape,*layers,loss = loss.MeanSquaredLoss(),regulizer = regulizers.Ridge(1/10),optimizer = optimizers.BatchGradientDescent()):
+	def __init__(self,input_shape,*layers,optimizer,loss = loss.MeanSquaredLoss(),regulizer = regulizers.Ridge(1/10)):
 		self.layers = self.compile_layers(input_shape,layers)
 		self.regulizer = regulizer
 		self.loss = loss
@@ -16,6 +16,7 @@ class Sequential:
 		new_layers = []
 		self.weighted_layers = []
 		self.training_layers = []
+		print("<NeuralNet>")
 		training_layer_types = ("DROPOUT")#JUST DROPOUT FOR NOW
 		for ind,layer in enumerate(layers):#include convertors and check if the input size does not match the next output size
 			if layer.config["dimension"] != len(output_shape) and layer.config["dimension"] != "ANY":
@@ -33,6 +34,7 @@ class Sequential:
 				new_layers.append(layer)
 			if hasattr(layer,"weights"):# SEEE IF THIS should be inside the "if layer.config["type"] statement 
 				self.weighted_layers.append(layer)
+		print("\n")
 		return new_layers
 
 	
@@ -87,13 +89,14 @@ class Sequential:
 
 if __name__ == "__main__":
 	import time
-	from activations import *
-	from convolution import *
-	from pooling import *
-	from hidden import *
-	from dropout import *
+	from layers.activations import *
+	from layers.convolution import *
+	from layers.pooling import *
+	from layers.hidden import *
+	from layers.dropout import *
 	from loss import *
-	from convertors import *
+	from layers.convertors import *
+	import optimizers
 	sig = Sigmoid()
 	sig.config["dimension"] = 1
 	a = Sequential((1,3,3),
@@ -110,7 +113,7 @@ if __name__ == "__main__":
 				MaxPooling2D(pooling_size  = [2,2]),
 				FullyConnected(2),
 				Bias(),
-				Sigmoid())
+				Sigmoid(),optimizer = optimizers.BatchGradientDescent(batch_size = 8))
 	print(a.layers[0].weights,a.layers[4].weights)
 	time.sleep(1)
 	'''
@@ -136,7 +139,7 @@ if __name__ == "__main__":
 	labels = [np.array([0,1]),np.array([1,0]),np.array([1,0]),np.array([0,1]),np.array([1,0]),np.array([0,1]),np.array([1,0]),np.array([0,1])]
 	startTime = time.time()
 	numData = 100
-	for i in range(2):
+	for i in range(10):
 		for ind,data in enumerate(trainingData):
 			b = a.run(data)
 			print("RESULT:",i,b,"EXPECTED RESULT",labels[ind])
