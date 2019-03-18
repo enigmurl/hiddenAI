@@ -1,16 +1,16 @@
 from sequential import Sequential 
 from layers.convolution import *
 from layers.activations import *
-from layers.hidden import *
+from layers.main_layers import *
 from layers.pooling import *
 from layers.dropout import Dropout
 import learning_rates
 import loss
+import optimizers
 from mnist import  MNIST
 import time
 import random
 import numpy as np
-import optimizers
 
 def printIm(img):#prints a representation of the digit
 	new_img = [img[i*28:28*(i+1)] for i in range(28)]
@@ -18,9 +18,9 @@ def printIm(img):#prints a representation of the digit
 		newLine = ["#" if val>0 else "." for val in preLine]
 		print(" ".join(newLine))
 start_data = time.time()
-mndata = MNIST('digitdata')
+mndata = MNIST("datasets/digitdata")
 images,labels = mndata.load_training()
-num_data = 5000# of the 60,000 images in the MNIST database, how many do we want to use
+num_data = 1000# of the 60,000 images in the MNIST database, how many do we want to use
 formatted_inputs = []
 formatted_labels = []
 for ind in range(num_data):
@@ -43,7 +43,7 @@ net = Sequential((784),
 				Bias(),
 				Softmax(),loss = loss.CrossEntropy())
 '''
-learning_rate = learning_rates.DecayLearningRate(0.1,1)
+learning_rate = learning_rates.DecayLearningRate(0.11,1)
 net = Sequential((1,28,28),
 				Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3)),
 				Bias(),	
@@ -61,9 +61,9 @@ net = Sequential((1,28,28),
 				#Dropout(0.2),
 				FullyConnected(10),
 				Bias(),
-				Softmax(),optimizer = optimizers.BatchGradientDescent(16,momentum = 0.9,learning_rate = learning_rate))
-#net.open_from_file("digitweight")# open up from digitweight a pre trained model
-num_trials = 2 # how many times we run over the same 10,000 images (epoch)
+				Softmax(),optimizer = optimizers.BatchGradientDescent(16,momentum = 0.9,learning_rate = learning_rate))#,loss = loss.CrossEntropy())
+#net.open_from_file("stored_weights/digitweight")# open up from digitweight a pre trained model
+num_trials = 1 # how many times we run over the same 10,000 images (epoch)
 
 #TRAINING THE MODEL
 score = 0
@@ -88,7 +88,7 @@ for i in range(25):
 #print([lyer for lyer in net.weighted_layers])
 print("SCORE:",score*4,"TOTAL TIME:",time.time()-start_data)
 net.train(formatted_inputs,formatted_labels,epoch = num_trials)#training the mode using stochasatic gradient descent
-net.save_to_file("digitweight")#after training is complete save the file
+#net.save_from_file("stored_weights/digitweight")# open up from digitweight a pre trained model
 #ASSESING THE MODEL
 
 score = 0

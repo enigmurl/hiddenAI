@@ -4,7 +4,6 @@ import random
 
 class BatchGradientDescent:
 	def __init__(self,batch_size = 5,momentum = 0,learning_rate = learning_rates.ConstantLearningRate(0.1)):
-		print("reinitialized")
 		self.seed = random.random()
 		self.momentum = momentum 
 		self.learning_rate = learning_rate
@@ -24,17 +23,18 @@ class BatchGradientDescent:
 
 	def derive_one_data(self,weight_gradients,training_layers,current_derivative,all_layers,last_layer_return = False):
 		weighted_num = -1
+		return_gradients  = weight_gradients[:]
 		for ind,layer in enumerate(training_layers[::-1]):
 			input_layer = all_layers[len(training_layers)-ind-1]
 			if hasattr(layer,"weights"): #if it has weights
 				layer_derivative = layer.derivative(input_layer,current_derivative)
-				weight_gradients[weighted_num] += layer_derivative 
+				return_gradients[weighted_num] += layer_derivative 
 				weighted_num -= 1
 			if ind != len(training_layers)-1:
 				current_derivative = layer.derivative_prev_layer(input_layer,current_derivative)
 			elif last_layer_return:
-				return weight_gradients,layer.derivative_prev_layer(input_layer,current_derivative)
-		return weight_gradients
+				return return_gradients,layer.derivative_prev_layer(input_layer,current_derivative)
+		return return_gradients
 
 	def batch_data(self,training_data,batch_size):
 		batched_data = []

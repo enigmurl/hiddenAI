@@ -23,7 +23,6 @@ class CrossEntropy:
 	def apply_single_loss(self,predicted_output,expected_output,batch_size = 1):
 		predicted_clipped_output = np.clip(predicted_output,0.00000001,0.99999999)
 		return -expected_output * np.log(predicted_clipped_output)/batch_size
-		#return -(expected_output * np.log(predicted_clipped_output) + (1-expected_output)*np.log((1-predicted_clipped_output)))/batch_size	
 
 if __name__ == "__main__":
 	a = CrossEntropy()
@@ -31,8 +30,7 @@ if __name__ == "__main__":
 	c = np.array([1,0])
 	print(a.apply_single_loss(b,c))
 	for i in range(100):
-		d =  - a.derivative_prev_layer(b,c,1)
-		print(d)
-		b = np.clip(b,0.0000001,0.99999999)
+		d =   a.derivative_prev_layer(b,c,1)
+		b = np.clip(b-d,0.0000001,0.99999999)
 	print("B",b)		
 	print(a.apply_single_loss(b,c))

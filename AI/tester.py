@@ -1,4 +1,2 @@
-import numpy as np
-import math
-a = 2
-assert a<= 2
+a  = 2
+print(a%0)

@@ -79,7 +79,6 @@ class ReLU(Activation): #TESTED
 
 	def run(self,input_layer):
 		output_layer = np.zeros(self.output_shape) 
-		#print(input_layer>0,input_layer[input_layer>0])	
 		output_layer[input_layer>0] = input_layer[input_layer>0]
 		return output_layer
 
@@ -140,20 +139,36 @@ class Softplus(Activation): #TESTED
 class Softmax(Activation):
 	def __init__(self):
 		super().__init__()
+		self.config["dimension"] = 1
 
 	def run(self,input_layer):
-		exponent_values = np.exp(input_layer - np.max(input_layer))
+		#exponent_values = np.exp(input_layer - np.max(input_layer))
+		exponent_values = np.exp(input_layer)
 		total_sum = np.sum(exponent_values)
 		return exponent_values/total_sum
 	
 	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
 		exponent_values = np.exp(input_layer - np.max(input_layer))
 		total_sum = np.sum(exponent_values)
+		prev_layer_derivative = np.zeros(self.input_shape)
+		for ind1,val1 in enumerate(exponent_values/total_sum): 
+			for ind2,val2 in enumerate(exponent_values/total_sum):
+				if ind2 == ind1:
+					prev_layer_derivative +=  (total_sum -val1 ) * val1/total_sum**2 
+					#prev_layer_derivative += (val1/total_sum + 1) * output_layer_derivative[ind1]
+					#prev_layer_derivative += (val1*(total_sum-1)/total_sum**2) * output_layer_derivative[ind1]
+					#prev_layer_derivative[ind1] += val1 * (1-val1) * output_layer_derivative[ind1] 
+				else:
+					prev_layer_derivative +=  -val1*val2/(total_sum**2)
+					#prev_layer_derivative -= val1/(val2**2) * output_layer_derivative[ind1]
+					#prev_layer_derivative[ind1] -= val1 * val2 * output_layer_derivative[ind1]
+		'''
 		prev_layer_derivative = []
 		for ind,val in enumerate(exponent_values):
 			sum_without_val = total_sum - val
-			prev_layer_derivative.append(output_layer_derivative[ind] * (sum_without_val*val)/(total_sum**2))
-		return prev_layer_derivative
+			prev_layer_derivative.append(output_layer_derivative[ind] * (sum_without_val*val)/(total_sum**2))'''
+		#print(prev_layer_derivative)
+		return prev_layer_derivative* output_layer_derivative 
 	
 class Tanh(Activation): #TESTED hyperbolic tangent
 	def __init__(self):
