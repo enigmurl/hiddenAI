@@ -1,8 +1,9 @@
 import pygame
-from sequential import * 
-from neat import NEAT
-from hidden import *
-from activations import *
+from hiddenAI.sequential import * 
+from hiddenAI.neat import NEAT
+from hiddenAI.optimizers import * 
+from hiddenAI.layers.main_layers import *
+from hiddenAI.layers.activations import *
 import random
 
 WIDTH = 800
@@ -63,9 +64,9 @@ class Bird:
 
 num_pillars = 10000
 num_birds = 50
-model = Sequential(7,FullyConnected(3),Bias(),Sigmoid(),FullyConnected(2),Bias(),Sigmoid()) 
+model = Sequential(7,FullyConnected(3),Bias(),Sigmoid(),FullyConnected(2),Bias(),Sigmoid(),optimizer = None) 
 neat = NEAT(model,num_per_generation = num_birds)
-all_bird_nets = [Sequential(7,FullyConnected(3),Bias(),Sigmoid(),FullyConnected(2),Bias(),Sigmoid()) for _ in range(num_birds)] 
+all_bird_nets = [Sequential(7,FullyConnected(3),Bias(),Sigmoid(),FullyConnected(2),Bias(),Sigmoid(),optimizer = None) for _ in range(num_birds)] 
 all_real_birds = [Bird() for _ in range(num_birds)]
 running = True
 clock = pygame.time.Clock()

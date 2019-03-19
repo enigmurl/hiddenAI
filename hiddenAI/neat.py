@@ -1,7 +1,7 @@
 import random
 import copy
 import numpy as np
-from sequential import Sequential
+from hiddenAI.sequential import Sequential
 
 class NEAT:
 	def __init__(self,model,num_per_generation = 10):
@@ -51,7 +51,7 @@ class NEAT:
 				layers.append(new_layer)
 			else:
 				layers.append(layer)
-		net =  Sequential(layers[0].input_shape)
+		net =  Sequential(layers[0].input_shape,optimizer = net1.optimizer)
 		net.layers = layers
 		return net
 
@@ -63,8 +63,8 @@ class NEAT:
 	
 if __name__ == "__main__":
 	from sequential import  Sequential
-	from hidden import * 
-	from activations import *
+	from layers.main_layers import * 
+	from layers.activations import *
 	net1 =  Sequential(4,FullyConnected(2),Bias(),Sigmoid()) 
 	neat = NEAT(net1)
 	net2 =  Sequential(4,FullyConnected(2),Bias(),Sigmoid()) 

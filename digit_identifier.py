@@ -1,22 +1,12 @@
-#adding to AI Library to path
-from inspect import getsourcefile
-import os.path
-import sys
-current_path = os.path.abspath(getsourcefile(lambda:0))
-current_directory = os.path.dirname(current_path)
-parent_directory = current_directory[:current_directory.rfind(os.path.sep)]
-
-sys.path.insert(0, parent_directory)
-
-from AI.sequential import Sequential 
-from AI.layers.convolution import *
-from AI.layers.activations import *
-from AI.layers.hidden import *
-from AI.layers.pooling import *
-from AI.layers.dropout import Dropout
-import AI.learning_rates
-import AI.loss
-import AI.optimizers
+from hiddenAI.sequential import Sequential 
+from hiddenAI.layers.convolution import *
+from hiddenAI.layers.activations import *
+from hiddenAI.layers.main_layers import *
+from hiddenAI.layers.pooling import *
+from hiddenAI.layers.dropout import Dropout
+import hiddenAI.learning_rates as learning_rates
+import hiddenAI.loss as loss
+import hiddenAI.optimizers as optimizers
 from mnist import  MNIST
 import time
 import random
@@ -30,7 +20,7 @@ def printIm(img):#prints a representation of the digit
 start_data = time.time()
 mndata = MNIST("datasets/digitdata")
 images,labels = mndata.load_training()
-num_data = 60000# of the 60,000 images in the MNIST database, how many do we want to use
+num_data = 1000# of the 60,000 images in the MNIST database, how many do we want to use
 formatted_inputs = []
 formatted_labels = []
 for ind in range(num_data):
@@ -51,9 +41,9 @@ net = Sequential((784),
 				Sigmoid(),
 				FullyConnected(10),
 				Bias(),
-				Softmax(),loss = AI.loss.CrossEntropy())
+				Softmax(),loss = loss.CrossEntropy())
 '''
-learning_rate = AI.learning_rates.DecayLearningRate(0.1,1)
+learning_rate = learning_rates.DecayLearningRate(0.11,1)
 net = Sequential((1,28,28),
 				Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3)),
 				Bias(),	
@@ -71,9 +61,9 @@ net = Sequential((1,28,28),
 				#Dropout(0.2),
 				FullyConnected(10),
 				Bias(),
-				Softmax(),optimizer = AI.optimizers.BatchGradientDescent(16,momentum = 0.9,learning_rate = learning_rate))
-net.open_from_file("builds/digit_identifier/digitweight")# open up from digitweight a pre trained model
-num_trials = 2 # how many times we run over the same 10,000 images (epoch)
+				Softmax(),optimizer = optimizers.BatchGradientDescent(16,momentum = 0.9,learning_rate = learning_rate))#,loss = loss.CrossEntropy())
+net.open_from_file("stored_weights/digitweight")# open up from digitweight a pre trained model
+num_trials = 1 # how many times we run over the same 10,000 images (epoch)
 
 #TRAINING THE MODEL
 score = 0
@@ -97,8 +87,8 @@ for i in range(25):
 		print('correct')
 #print([lyer for lyer in net.weighted_layers])
 print("SCORE:",score*4,"TOTAL TIME:",time.time()-start_data)
-net.train(formatted_inputs,formatted_labels,epoch = num_trials)#training the mode using stochasatic gradient descent
-net.save_from_file("builds/digit_identifier/digitweight")# open up from digitweight a pre trained model
+#net.train(formatted_inputs,formatted_labels,epoch = num_trials)#training the mode using stochasatic gradient descent
+#net.save_from_file("stored_weights/digitweight")# open up from digitweight a pre trained model
 #ASSESING THE MODEL
 
 score = 0

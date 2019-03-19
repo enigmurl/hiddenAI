@@ -1,5 +1,5 @@
-from progress_bar import ProgressBar
-import learning_rates
+from hiddenAI.progress_bar import ProgressBar
+import hiddenAI.learning_rates as learning_rates
 import random
 
 class BatchGradientDescent:

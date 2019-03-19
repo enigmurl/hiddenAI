@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import random
-from hidden import Hidden
+from hiddenAI.hidden import Hidden
 
 
 

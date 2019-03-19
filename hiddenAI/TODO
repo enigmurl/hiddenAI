@@ -2,7 +2,7 @@ PRIORITIES
 	1)MAKE DIRECTORIES WORKING PROPERLY, SO TEST/EXAMPLES FOLDER WORKS AND MAKE AI AN ACTUAL MODULE 
 	2)Different nets:
 		CNNS,need to optimize, add the different types of convolutional layers,(deconvolutional)
-		GANs,make the training use the optimizers of the layers rather than how it is right now, may need to rework optimizers for this, or add a convertor
+		GANs,make the training use the optimizers of the layers rather than how it is right now, may need to rework optimizers for this, or add a convertor, ConditonalGAN,Stack GAN
 		RNNS need to implement
 	3)q Learnings
 	4)CrossEntropy,other losses, other types of training(the one on computerfile for face recognition), and fix the training for non neural networks

@@ -1,9 +1,6 @@
-from layers.convertors import *
 import pickle
-import loss
-import regulizers
-import optimizers
-
+from hiddenAI import loss,regulizers,optimizers
+from hiddenAI.layers.convertors import *
 class Sequential:
 	def __init__(self,input_shape,*layers,optimizer,loss = loss.MeanSquaredLoss(),regulizer = regulizers.Ridge(1/10)):
 		self.layers = self.compile_layers(input_shape,layers)

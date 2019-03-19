@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import random
-from hidden import Hidden
+from hiddenAI.hidden import Hidden
 
 class Convolution(Hidden):
 	def __init__(self,input_shape = None,num_filters = 1,filter_size = (2) , stride = (2)):
