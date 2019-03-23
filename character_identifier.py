@@ -1,10 +1,10 @@
-from sequential import Sequential
-from layers.main_layers import *
-from layers.convolution import *
-from layers.pooling import *
-from layers.activations import *
-import learning_rates
-import optimizers
+from hiddenAI.sequential import Sequential
+from hiddenAI.layers.main_layers import *
+from hiddenAI.layers.convolution import *
+from hiddenAI.layers.pooling import *
+from hiddenAI.layers.activations import *
+import hiddenAI.learning_rates as learning_rates
+import hiddenAI.optimizers as optimizers
 from mnist import MNIST
 import random
 import time
@@ -40,7 +40,7 @@ num_runs = 1
 data_loader = MNIST("datasets/characterdata")
 images,labels = data_loader.load_training()
 print("IMAGES:" , len(images))
-num_data =  697932 
+num_data =  697932
 images  = np.reshape(images[:num_data],(num_data,28,28))
 images = [rotate_image(image) for image in images]
 character_map = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
@@ -76,11 +76,10 @@ model = Sequential((1,28,28),
 					FullyConnected(62),
 					Bias(),
 					Softmax(),optimizer = optimizer)
-#model.open_from_file("stored_weights/characterweights")
+model.open_from_file("stored_weights/characterweights")
 print("PRETRAIN:",asses_model(25))
 model.train(formatted_inputs,formatted_labels, epoch = num_runs)
 model.save_to_file("stored_weights/characterweights")
 
 #ASSESING THE MODEL
 print("POSTTRAIN:",asses_model(100))
-print(time.time()-start_time)

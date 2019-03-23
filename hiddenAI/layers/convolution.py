@@ -45,7 +45,6 @@ class Convolution(Hidden):
 			#padded_dimension = max(0,math.ceil((dimension - start + 1)/self.stride[ind])) + start
 			padded_dimension = current	 
 			padded_shape[ind+1] = padded_dimension
-		#print(padded_shape)
 		return padded_shape
 	
 	def compute_output_shape(self,padded_shape):
@@ -90,19 +89,43 @@ class Convolution1D(Convolution):#NEEDS TESTING
 		super().__init__(input_shape,self.num_filters,self.filter_size,self.stride)
 		self.filter_number_weights = self.filter_size[0] * self.num_input_channels
 		self.number_weights = self.filter_number_weights * self.num_filters
- 
-	def apply_one_filter(self,filter,input_layer):	
-		padded_input_layer = np.zeros(self.padded_shape)#can optimize if pad = false
+	def run(self,input_layer):
+		
+		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1]] = input_layer
-		output_channel = np.zeros(self.output_shape[1:])
-		x_pos = 0
+		output_channel = np.zeros(self.output_shape)
 		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
-			slice = np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0]]) 
-			multiplied_average = slice*filter
-			multiplied_sum_average = np.sum(multiplied_average)
-			output_channel[x_pos//self.stride[0]] = multiplied_sum_average
-			x_pos += self.stride[0]
-		return output_channel#it will be made into a numpy  array in the run function
+			slice =  np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0]])
+			for filter_num,filter in enumerate(self.weights):
+				multiplied_average = slice*filter
+				multiplied_sum_average = np.sum(multiplied_average)
+				output_channel[filter_num,x_pos//self.stride[0]] = multiplied_sum_average
+				
+		return output_channel
+	def derivative(self,input_layer,output_layer_derivative,**kwargs):
+		padded_input_layer = np.zeros(self.padded_shape)
+		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer
+		layer_derivative = []
+		for filter_num,filter in enumerate(self.weights): 
+			filter_derivative = np.zeros(filter.shape)
+			for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
+				for y_pos in range(0,self.individual_input_shape[1]-self.filter_size[1]+1,self.stride[1]):
+					slice = padded_input_layer[:,x_pos:x_pos + self.filter_size[0],y_pos:y_pos + self.filter_size[1]]
+					filter_derivative += slice * output_layer_derivative[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]]
+			layer_derivative.append(filter_derivative)
+		return np.array(layer_derivative)
+ 
+	def run(self,input_layer):	
+		padded_input_layer = np.zeros(self.padded_shape)
+		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1]] = input_layer
+		output_channel = np.zeros(self.output_shape)
+		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
+				slice =  np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0]])
+				for filter in self.weights:
+					multiplied_average = slice*filter
+					multiplied_sum_average = np.sum(multiplied_average)
+					output_channel[x_pos//self.stride[0]] = multiplied_sum_average
+		return output_channel
 	
 	def derivative(self,input_layer,output_layer_derivative,**kwargs):
 		padded_input_layer = np.zeros(self.padded_shape)
@@ -137,6 +160,7 @@ class Convolution2D(Convolution):#NEEDS TESTING
 		self.filter_number_weights = self.filter_size[0] * self.filter_size[1] * self.num_input_channels
 		self.number_weights = self.filter_number_weights * self.num_filters
 
+	'''	
 	def apply_one_filter(self,filter,input_layer):
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer
@@ -149,7 +173,21 @@ class Convolution2D(Convolution):#NEEDS TESTING
 				output_channel[x_pos//self.stride[0],y_pos//self.stride[1]] = multiplied_sum_average
 		#print("CONV2D:",output_channel,"\n",input_layer,"\n",filter,"\n",padded_input_layer,"\n",self.padded_shape)
 		return output_channel
-	
+	'''
+	def run(self,input_layer):
+		
+		padded_input_layer = np.zeros(self.padded_shape)
+		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer
+		output_channel = np.zeros(self.output_shape)
+		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
+			for y_pos in range(0,self.individual_input_shape[1]-self.filter_size[1]+1,self.stride[1]):
+				slice =  np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0],y_pos:y_pos + self.filter_size[1]])
+				for filter_num,filter in enumerate(self.weights):
+					multiplied_average = slice*filter
+					multiplied_sum_average = np.sum(multiplied_average)
+					output_channel[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]] = multiplied_sum_average
+				
+		return output_channel
 	def derivative(self,input_layer,output_layer_derivative,**kwargs):
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer
@@ -162,7 +200,7 @@ class Convolution2D(Convolution):#NEEDS TESTING
 					filter_derivative += slice * output_layer_derivative[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]]
 			layer_derivative.append(filter_derivative)
 		return np.array(layer_derivative)
-	
+
 	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
 		prev_layer_derivative = np.zeros(self.padded_shape)
 		for filter_num,filter in enumerate(self.weights):
@@ -170,6 +208,7 @@ class Convolution2D(Convolution):#NEEDS TESTING
 				for y_pos in range(0,self.individual_input_shape[1] - self.filter_size[1] + 1, self.stride[1]):
 					prev_layer_derivative[:,x_pos:x_pos + self.filter_size[0],y_pos:y_pos + self.filter_size[1]] += output_layer_derivative[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]] * filter
 		return prev_layer_derivative[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[1]] 
+	
 		'''
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:input_layer.shape[0],:input_layer.shape[1],:input_layer.shape[2]] = input_layer

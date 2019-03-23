@@ -1,4 +1,4 @@
-from sequential import Sequential
+from hiddenAI.sequential import Sequential
 import numpy as np
 
 class GAN(Sequential):
@@ -11,15 +11,16 @@ class GAN(Sequential):
 		self.generator_input_shape = generator.layers[0].input_shape
 		self.discriminator_input = discriminator.layers[0].input_shape
 
-	def train(self,real_data,real_data_output = np.array([0,1]),generated_data_output = np.array([1,0])):# MAKE THIS INCLUDE THE OPTIMIZERS BETTER
+	def train(self,real_data,training_inputs = None,real_data_output = np.array([0,1]),generated_data_output = np.array([1,0])):# MAKE THIS INCLUDE THE OPTIMIZERS BETTER
 		discriminator_weighted_layers = self.discriminator.weighted_layers
 		self.discriminator.optimizer.last_gradients = self.discriminator.optimizer.blank_weights(discriminator_weighted_layers)
 		generator_weighted_layers = self.generator.weighted_layers
 		self.generator.optimizer.last_gradients = self.generator.optimizer.blank_weights(generator_weighted_layers)
 		
-
+		if not hasattr(training_inputs,"__iter__"):
+			training_inputs = self.noise(size = np.concatenate((np.array([len(real_data)]),np.array(self.generator_input_shape))))
 		
-		for data in real_data:
+		for ind,data in enumerate(real_data):
 			discriminator_gradients = self.discriminator.optimizer.blank_weights(discriminator_weighted_layers)
 			generator_gradients = self.generator.optimizer.blank_weights(generator_weighted_layers)
 			#train discriminator on real_data 
@@ -30,9 +31,9 @@ class GAN(Sequential):
 																					discriminator_loss_derivative,
 																					discriminator_layers)
 			#train discriminator on generated data, while also training generator
-			generator_noise = self.noise(size = self.generator_input_shape)
+			#generator_noise = self.noise(size = self.generator_input_shape) if training_inputs == None else training_inputs[ind]
+			generator_noise = training_inputs[ind] 
 			generator_layers = self.generator.training_run(generator_noise)
-			print(generator_layers[-1])
 			discriminator_layers = self.discriminator.training_run(generator_layers[-1])
 			discriminator_loss_derivative = self.discriminator.loss.derivative_prev_layer(discriminator_layers[-1],generated_data_output,batch_size = 2)
 			discriminator_gradients,generator_last_derivative = self.discriminator.optimizer.derive_one_data(	discriminator_gradients,
@@ -56,22 +57,3 @@ class GAN(Sequential):
 
 	def run_discriminator(self,input_layer):
 		return self.discriminator.run(input_layer)
-if __name__ == "__main__":
-	from layers.main_layers import *
-	from layers.activations import *
-	import optimizers
-	import learning_rates
-	lr = learning_rates.ConstantLearningRate(0.1)
-	discriminator = Sequential([1],FullyConnected(2),Bias(),Softmax(),optimizer = optimizers.BatchGradientDescent(batch_size = 4,learning_rate = lr))
-	generator     = Sequential([4],FullyConnected(1),Bias(),optimizer = optimizers.BatchGradientDescent(learning_rate = lr))
-	c = GAN(discriminator,generator)
-	target = 4
-	numdata = 10000
-	#data = target + np.random.randn(numdata,1)
-	data = np.full((numdata,1),target)
-	print("first:",c.generator.run(np.random.random(size = (4))))
-	c.train(data)
-	final = c.generator.run(np.random.random(size = (4)))
-	print("FINAL:",c.generator.run(np.random.random(size = (4))))
-	
-	print("DISCRIMINATOR",c.run_discriminator(final),c.run_discriminator(np.array([target])),"EXPECTED:",[1,0],[0,1])
