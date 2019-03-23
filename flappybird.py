@@ -114,4 +114,4 @@ while running:
 		if alive ==0:
 			gen_running = False
 		pygame.display.flip()			
-neat.save_model_to_file("flappy_bird")	
+neat.save_model_to_file("stored_weights/flappy_bird")	

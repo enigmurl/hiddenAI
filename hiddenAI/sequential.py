@@ -14,7 +14,6 @@ class Sequential:
 		new_layers = []
 		self.weighted_layers = []
 		self.training_layers = []
-		print("<NeuralNet>")
 		training_layer_types = ("DROPOUT")#JUST DROPOUT FOR NOW
 		for ind,layer in enumerate(layers):#include convertors and check if the input size does not match the next output size
 			if layer.config["dimension"] != len(output_shape) and layer.config["dimension"] != "ANY":
@@ -32,7 +31,6 @@ class Sequential:
 				new_layers.append(layer)
 			if hasattr(layer,"weights"):# SEEE IF THIS should be inside the "if layer.config["type"] statement 
 				self.weighted_layers.append(layer)
-		print("\n")
 		return new_layers
 
 	
