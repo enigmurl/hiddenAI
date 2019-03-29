@@ -54,7 +54,7 @@ class BatchGradientDescent:
 	
 	#MAY WANT TO IMPLEMENT A derive one batch method
 	
-	def train(self,input_data,expected_outputs,epoch,training_layers,run_function,loss_function_derivative,regulizer,print_epochs = False):
+	def train(self,input_data,expected_outputs,epoch,training_layers,run_function,loss_function_derivative,regulizer,print_epochs = False,maximize = False):
 		weighted_layers = []
 		for layer in training_layers:
 			if hasattr(layer,"weights"):
@@ -78,6 +78,9 @@ class BatchGradientDescent:
 					if print_epochs:
 						progress_bar.update()
 				#weight_gradients = [regulizer.apply_derivative(self.weighted_layers[layer_num].weights,layer_derivative) for layer_num,layer_derivative in enumerate(weight_gradients)] 
-				self.descend(weight_gradients,weighted_layers)
+				if maximize:
+					self.descend(-weight_gradients,weighted_layers)
+				else: 
+					self.descend(weight_gradients,weighted_layers)
 			self.iterations += 1
 		return training_layers		

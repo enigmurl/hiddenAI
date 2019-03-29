@@ -94,7 +94,7 @@ class ReLU(Activation): #TESTED
 		return 1 if x >= 0 else 0  
 
 class RReLU(Activation): #TESTED
-	def __init__(self,multiplier = 1/5):
+	def __init__(self,multiplier = 1/100):
 		super().__init__()
 		self.config = {"dimension":"ANY","type":"ACTIVATION"}
 		self.multiplier = multiplier
@@ -142,8 +142,7 @@ class Softmax(Activation):
 		self.config["dimension"] = 1
 
 	def run(self,input_layer):
-		#exponent_values = np.exp(input_layer - np.max(input_layer))
-		exponent_values = np.exp(input_layer)
+		exponent_values = np.exp(input_layer - np.max(input_layer))
 		total_sum = np.sum(exponent_values)
 		return exponent_values/total_sum
 	

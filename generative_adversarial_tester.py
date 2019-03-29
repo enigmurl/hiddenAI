@@ -1,20 +1,38 @@
+import numpy as np
+def noise(size = 1):
+	return np.random.random(size= size)*100 - 50
 if __name__ == "__main__":
+	import matplotlib.pyplot as plt
 	from hiddenAI.generative_adversarial import *
 	from hiddenAI.layers.main_layers import *
 	from hiddenAI.layers.activations import *
 	import hiddenAI.optimizers as optimizers
+	import hiddenAI.loss as loss
 	import hiddenAI.learning_rates as learning_rates
-	lr = learning_rates.ConstantLearningRate(0.1)
-	discriminator = Sequential([1],FullyConnected(2),Bias(),Softmax(),optimizer = optimizers.BatchGradientDescent(batch_size = 4,learning_rate = lr))
-	generator     = Sequential([1],FullyConnected(1),Bias(),optimizer = optimizers.BatchGradientDescent(learning_rate = lr))
-	c = GAN(discriminator,generator)
+	los = loss.BinaryCrossEntropy()
+	lr = learning_rates.DecayLearningRate(0.001,0)
+	lr2 = learning_rates.DecayLearningRate(0.001,0)
+	bsize = 256
+	discriminator = Sequential([2],FullyConnected(16),Bias(),RReLU(),FullyConnected(16),Bias(),RReLU(),FullyConnected(2),Bias(),Softmax(),optimizer = optimizers.BatchGradientDescent(batch_size = bsize,learning_rate = lr2,momentum = 0),loss=los)
+	generator     = Sequential([2],FullyConnected(16),Bias(),RReLU(),FullyConnected(16),Bias(),RReLU(),FullyConnected(2),optimizer = optimizers.BatchGradientDescent(learning_rate = lr,batch_size = bsize,momentum = 0))
+	c = GAN(discriminator,generator,noise = noise)
 	numdata = 10000
 	#data = target + np.random.randn(numdata,1)
-	data = np.random.randint(-100,100,size = (numdata,1))
-	output = data**1/2 + 10
-	print("first:",c.generator.run(np.random.random(size = (1))))
-	c.train(output,training_inputs = data)
-	final = c.generator.run(np.random.random(size = (1)))
-	innum = 10
-	print("FINAL:",c.generator.run(np.array([innum])))	
-	print("DISCRIMINATOR",c.run_discriminator(final),c.run_discriminator(np.array([innum**2 + 10])),"EXPECTED:",[1,0],[0,1])
+	data = np.random.uniform(-50,50,size = (numdata,1))
+	output = data**2 + 10
+	plt.plot(data,output,"ro")
+	vals = [c.run_generator() for _ in data]
+	plt.plot([val[0] for val in vals],[val[1] for val in vals],"go")
+	invals = [np.concatenate((val,output[ind])) for ind,val in enumerate(data)]
+	c.train(invals)
+	innum = 5
+	final = c.run_generator()
+	print(c.run_discriminator(final),c.run_discriminator(np.array([innum**2 + 10,innum])))
+	vals = [c.run_generator() for _ in data]
+	plt.plot([val[0] for val in vals],[val[1] for val in vals],"bo")
+	c.train(invals)
+	vals = [c.run_generator() for _ in data]
+	plt.plot([val[0] for val in vals],[val[1] for val in vals],"yo")
+	plt.show()
+	final = c.run_generator()
+	print(c.run_discriminator(final),c.run_discriminator(np.array([innum**2 + 10,innum])))

@@ -5,7 +5,7 @@ class MeanSquaredLoss:
 		pass	
 
 	def derivative_prev_layer(self,predicted_output,expected_output,batch_size = 1):
-		return (2/batch_size) * (predicted_output - expected_output)
+		return  (predicted_output - expected_output) * 2/batch_size
 	
 	def apply_sing_loss(self,predicted_output,expected_output,batch_size = 1):
 		partial_loss = predicted_output - expected_output
@@ -18,12 +18,23 @@ class CrossEntropy:
 		
 	def derivative_prev_layer(self,predicted_output,expected_output,batch_size = 1):
 		predicted_clipped_output = np.clip(predicted_output,0.00000001,0.99999999)
-		return -expected_output/(batch_size * predicted_clipped_output)
+		return -expected_output/(predicted_clipped_output*batch_size)
 	
 	def apply_single_loss(self,predicted_output,expected_output,batch_size = 1):
 		predicted_clipped_output = np.clip(predicted_output,0.00000001,0.99999999)
 		return -expected_output * np.log(predicted_clipped_output)/batch_size
 
+class BinaryCrossEntropy:
+	def __init__(self):
+		pass
+	
+	def derivative_prev_layer(self,predicted_output,expected_output,batch_size = 1):
+		predicted_clipped_output = np.clip(predicted_output,0.00000001,0.99999999)
+		return -(((expected_output)/(predicted_clipped_output))-((1-expected_output)/(1-predicted_clipped_output)))/batch_size
+	
+	def apply_single_loss(self,predicted_output,expected_output,batch_size = 1):
+		predicted_clipped_output = np.clip(predicted_output,0.00000001,0.99999999)
+		return -(expected_output * np.log(predicted_clipped_output)+ (1-expected_output)*np.log(1-predicted_clipped_output))/batch_size
 if __name__ == "__main__":
 	a = CrossEntropy()
 	b = np.array([0.,0])

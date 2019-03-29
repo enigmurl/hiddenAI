@@ -1,28 +1,25 @@
 PRIORITIES
-	1)MAKE DIRECTORIES WORKING PROPERLY, SO TEST/EXAMPLES FOLDER WORKS AND MAKE AI AN ACTUAL MODULE 
-	2)Different nets:
-		CNNS,need to optimize, add the different types of convolutional layers,(deconvolutional)
+	1)Different nets:
+		CNNS,make matrix multiplication?,need to optimize,
 		GANs,make the training use the optimizers of the layers rather than how it is right now, may need to rework optimizers for this, or add a convertor, ConditonalGAN,Stack GAN
 		RNNS need to implement
-	3)q Learnings
-	4)CrossEntropy,other losses, other types of training(the one on computerfile for face recognition), and fix the training for non neural networks
-	5)linear regression, decision tree 
+	2)q Learnings
+	3)CrossEntropy,other losses, other types of training(the one on computerfile for face recognition), and fix the training for non neural networks
+	4)linear regression, decision tree 
 
 FEATURES
 	1)KWARGS: starting_value,padding or not
-	2) Make descents optimizers, also add more losses and regulizers
-	3)learning rate a class
+	2) add more losses and regulizers
 
 TESTING
 	1)Test all layers
 
 RESEARCH
-	1)What is Dropout,Momentum,Decay,(Fix regularization)?
-	2)Values of a cnn kernel(-1 to 1 only?), is momentum only for SGD
-	3)Is the name filter_size or kernel_size 
-	4)Are iterations num batches or num total or what
+	1) deconvolutional
+	2) unpooling
 BUGS
-	1 )Softmax 
+	1)FIX POOLING PADDING
+	1) Softmax, Cross Entropy
 	2) regularization
 
 OPTIMIZATION

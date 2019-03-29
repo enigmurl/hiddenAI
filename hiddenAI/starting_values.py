@@ -1,5 +1,8 @@
 import numpy as np
-def zeros(shape):
+class Zeros:
+	def __init__(self):
+		pass
+	def initvalues(self,shape)
 	return np.zeros(shape)
 
 def ones(shape):

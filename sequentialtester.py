@@ -12,14 +12,14 @@ if __name__ == "__main__":
 	import hiddenAI.learning_rates as learning_rates
 	sig = Sigmoid()
 	sig.config["dimension"] = 1
-	lrning_rate = learning_rates.DecayLearningRate(0.05,1)
+	lrning_rate = learning_rates.ConstantLearningRate(0.1)
 	a = Sequential((1,3,3),
-				Convolution2D(num_filters = 3,filter_size = (2,2),stride = (2,2)),
+				Convolution2D(num_filters = 3,filter_size = (2,2),stride = (2,2),pad = 2),
 				Bias(),
 				ReLU(),
 				#Dropout(0.2),
 				MaxPooling2D(pooling_size = [2,2]),
-				Convolution2D(num_filters = 2,filter_size = (3,3),stride = (2,2)),
+				Convolution2D(num_filters = 2,filter_size = (3,3),stride = (2,2),pad = 2),
 				Bias(),
 				ReLU(),
 				##ELU(),
@@ -27,8 +27,7 @@ if __name__ == "__main__":
 				MaxPooling2D(pooling_size  = [2,2]),
 				FullyConnected(2),
 				Bias(),
-				Softmax(),optimizer = optimizers.BatchGradientDescent(batch_size = 8,learning_rate = lrning_rate),loss = loss.CrossEntropy())
-	time.sleep(1)
+				Softmax(),optimizer = optimizers.BatchGradientDescent(batch_size = 8,learning_rate = lrning_rate),loss=BinaryCrossEntropy())
 	'''
 	a = Sequential((9),
 				FullyConnected(6),
