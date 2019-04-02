@@ -32,14 +32,12 @@ def asses_model(num_asses):
 	return score/num_asses
 
 def rotate_image(image):
-	
 	flipped_image = np.fliplr(image)
 	return np.rot90(flipped_image)
 
 num_runs = 1
 data_loader = MNIST("datasets/characterdata")
 images,labels = data_loader.load_training()
-print("IMAGES:" , len(images))
 num_data =  697932
 images  = np.reshape(images[:num_data],(num_data,28,28))
 images = [rotate_image(image) for image in images]
@@ -49,7 +47,6 @@ formatted_labels = []
 start_time = time.time()
 for ind,val in enumerate(images):
 	output = np.zeros(62)
-	#label_index  =  character_map.index(labels[ind])
 	label_index = labels[ind]
 	output[label_index] = 1
 	new_image = np.array([[pxl/255 for pxl in images[ind]]])
@@ -59,7 +56,7 @@ for ind,val in enumerate(images):
 
 #INITIALIZING THE MODEL + TRAINING
 learning_rate = learning_rates.DecayLearningRate(0.1,1)
-optimizer = optimizers.BatchGradientDescent(batch_size = 10,momentum = 0.9,learning_rate = learning_rate)
+optimizer = optimizers.BatchGradientDescent(batch_size = 64,momentum = 0.9,learning_rate = learning_rate)
 model = Sequential((1,28,28),
 					Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3)),
 					MaxPooling2D(pooling_size = (2,2),stride = (2,2)),
@@ -67,9 +64,6 @@ model = Sequential((1,28,28),
 					Convolution2D(num_filters = 64,filter_size = (3,3),stride = (3,3)),
 					MaxPooling2D(pooling_size = (2,2),stride = (2,2)),
 					ReLU(), 
-					#Convolution2D(num_filters = 128,filter_size = (2,2),stride = (2,2)),
-					#MaxPooling2D(pooling_size = (2,2),stride = (2,2)),
-					#ReLU(), 
 					FullyConnected(128),
 					Bias(),
 					ReLU(),

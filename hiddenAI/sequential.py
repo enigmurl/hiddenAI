@@ -25,12 +25,13 @@ class Sequential:
 				output_shape = convertor.output_shape
 			layer.init_input_shape(output_shape)
 			output_shape = layer.output_shape if hasattr(layer.output_shape,"__iter__") else [layer.output_shape]
-			print(layer,output_shape)
+			#print(layer,output_shape)
 			self.training_layers.append(layer)
 			if layer.config["type"] not in training_layer_types:
 				new_layers.append(layer)
 			if hasattr(layer,"weights"):# SEEE IF THIS should be inside the "if layer.config["type"] statement 
 				self.weighted_layers.append(layer)
+		print(self)
 		return new_layers
 
 	
@@ -40,11 +41,14 @@ class Sequential:
 	def __getitem__(self,ind):
 		return self.layers[ind]
 	
+	def __str__(self):
+		modelstring = ""
+		for layer in self.training_layers:
+			modelstring += str(type(layer)) + " "+ str(layer.output_shape) + "\n"
+		return modelstring
+	
 	def __repr__(self):
-		string = ""
-		for layer in self.layers:
-			string += str(type(layer))
-		return string
+		return self.__str__()
 
 	def save_to_file(self,filename):
 		with open(filename,"wb") as f:
@@ -54,7 +58,7 @@ class Sequential:
 	def open_from_file(self,filename):
 		with open(filename,"rb") as f:
 			for layer in self.weighted_layers:
-				layer.weights = pickle.load(f)
+				layer.update_weights(pickle.load(f))
 	
 	def run(self,input_layer,full_return = False):
 		current_value = input_layer

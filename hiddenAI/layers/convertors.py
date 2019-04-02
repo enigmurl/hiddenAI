@@ -19,7 +19,7 @@ class ConvertorND1D(Convertor):
 		return [shape]
 
 	def run(self,input_layer):
-		return np.reshape(input_layer,self.output_shape[0])
+		return np.ravel(input_layer) 
 
 	def derivative_prev_layer(self,input_layer,output_layer_derivative):
 		return np.reshape(output_layer_derivative,self.input_shape)

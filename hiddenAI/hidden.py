@@ -5,6 +5,9 @@ class Hidden:
 		self.input_shape = input_shape if hasattr(input_shape,"__iter__") else [input_shape]
 		self.output_shape = output_shape if hasattr(output_shape,"__iter__") else [output_shape]
 	
+	def update_weights(self,weights):
+		self.weights = weights
+	
 	def run(self,input_layer): #may be over rided if the layer is 1d to 2d, or a different form
 		pass# overided as they differ heavily
 

@@ -42,23 +42,24 @@ class Pooling:
 		pass
 
 class MaxPooling1D(Pooling):
-	def __init__(self,pooling_size = [2] ,stride = [2]):
+	def __init__(self,pooling_size = [2] ,stride = [2],pad = True):
 		super().__init__()
 		self.config = {"type":"POOLING","dimension":2}
 		self.pooling_size = pooling_size if hasattr(pooling_size,"__iter__") else [pooling_size] 
 		self.stride = stride if hasattr(stride,"__iter__") else [stride]
-	
+		self.pad = pad	
+
 	def run(self,input_layer): 
 		output_layer = np.zeros(self.output_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				output_layer[channel_num,x_pos//self.stride[0]] = np.max(input_layer[channel_num,x_pos:self.pooling_size[0]+x_pos])
 		return output_layer	
 		
 	def derivative_prev_layer(self,input_layer, output_layer_derivative,**kwargs):
 		prev_layer_derivative = np.zeros(self.input_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				input_slice = input_layer[channel_num,x_pos:self.pooling_size[0] + x_pos]
 				max_value = np.max(input_slice)
 				slice = prev_layer_derivative[channel_num,x_pos:self.pooling_size[0] + x_pos] 
@@ -77,7 +78,7 @@ class MaxPooling2D(Pooling):
 	def run(self,input_layer): 
 		output_layer = np.zeros(self.output_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				for y_pos in range(0,max(1,self.padded_input_shape[2] - self.pooling_size[1]+1),self.stride[1]):	
 					max_value = np.max(input_layer[channel_num,x_pos:self.pooling_size[0]+ x_pos,y_pos:self.pooling_size[1] + y_pos])
 					output_layer[channel_num,x_pos//self.stride[0],y_pos//self.stride[1]] = max_value
@@ -86,7 +87,7 @@ class MaxPooling2D(Pooling):
 	def derivative_prev_layer(self,input_layer, output_layer_derivative,**kwargs):
 		prev_layer_derivative = np.zeros(self.input_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				for y_pos in range(0,max(1,self.padded_input_shape[2] - self.pooling_size[1]+1),self.stride[1]):	
 					input_slice = input_layer[channel_num,x_pos:self.pooling_size[0]+ x_pos,y_pos:self.pooling_size[1] + y_pos]
 					max_value = np.max(input_slice)
@@ -106,14 +107,14 @@ class AvgPooling1D(Pooling):
 	def run(self,input_layer):
 		output_layer = np.zeros(self.output_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				output_layer[channel_num,x_pos//self.stride[0]] = np.mean(input_layer[channel_num,x_pos:self.pooling_size[0]+x_pos])
 		return output_layer	
 		
 	def derivative_prev_layer(self,input_layer, output_layer_derivative,**kwargs):
 		prev_layer_derivative = np.zeros(self.input_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				slice = prev_layer_derivative[channel_num,x_pos:self.pooling_size[0] + x_pos] 
 				slice +=  output_layer_derivative[channel_num,x_pos//self.stride[0]]/(self.pooling_size[0]) 
 
@@ -130,7 +131,7 @@ class AvgPooling2D(Pooling):
 	def run(self,input_layer): 
 		output_layer = np.zeros(self.output_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				for y_pos in range(0,max(1,self.padded_input_shape[2] - self.pooling_size[1]+1),self.stride[1]):	
 					mean_value = np.mean(input_layer[channel_num,x_pos:self.pooling_size[0]+ x_pos,y_pos:self.pooling_size[1] + y_pos])
 					output_layer[channel_num,x_pos//self.stride[0],y_pos//self.stride[1]] = mean_value
@@ -139,7 +140,7 @@ class AvgPooling2D(Pooling):
 	def derivative_prev_layer(self,input_layer, output_layer_derivative,**kwargs):
 		prev_layer_derivative = np.zeros(self.input_shape)
 		for channel_num in range(self.padded_input_shape[0]):
-			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[1]+1),self.stride[0]):	
+			for x_pos in range(0,max(1,self.padded_input_shape[1] - self.pooling_size[0]+1),self.stride[0]):	
 				for y_pos in range(0,max(1,self.padded_input_shape[2] - self.pooling_size[1]+1),self.stride[1]):	
 					slice = prev_layer_derivative[channel_num,x_pos:self.pooling_size[0] + x_pos,y_pos:self.pooling_size[1] + y_pos] 
 					slice += output_layer_derivative[channel_num,x_pos//self.stride[1],y_pos//self.stride[1]]/(self.pooling_size[0] * self.pooling_size[1])

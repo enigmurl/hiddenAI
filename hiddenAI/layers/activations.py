@@ -94,7 +94,7 @@ class ReLU(Activation): #TESTED
 		return 1 if x >= 0 else 0  
 
 class RReLU(Activation): #TESTED
-	def __init__(self,multiplier = 1/100):
+	def __init__(self,multiplier = 0.01):
 		super().__init__()
 		self.config = {"dimension":"ANY","type":"ACTIVATION"}
 		self.multiplier = multiplier

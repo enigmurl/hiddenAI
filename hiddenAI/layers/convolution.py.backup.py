@@ -2,6 +2,7 @@ import math
 import numpy as np
 import random
 from hiddenAI.hidden import Hidden
+
 class Convolution(Hidden):
 	def __init__(self,input_shape = None,num_filters = 1,filter_size = (2) , stride = (2)):#organize the function
 		self.num_filters = num_filters
@@ -50,13 +51,8 @@ class Convolution(Hidden):
 	def blank(self):
 		return np.zeros(self.weights.shape) 
 	
-	def update_weights(self,weights):
-		self.weights = weights
-		self.kernel_matrix = self.get_kernel_matrix()
-	
 	def descend(self,derivatives):
 		self.weights -= derivatives
-		self.kernel_matrix = self.get_kernel_matrix()
 	
 class Convolution1D(Convolution):#NEEDS TESTING
 	def __init__(self,num_filters =1, filter_size = (2), stride = (2),pad = 0):
@@ -65,32 +61,27 @@ class Convolution1D(Convolution):#NEEDS TESTING
 		self.filter_size = filter_size if filter_size is np.ndarray else np.array(filter_size) 
 		self.stride = stride if stride is np.ndarray else np.array(stride)
 		self.pad = pad
-
-	def get_kernel_matrix(self):
-		matrix_shape = (self.output_shape[0] * self.output_shape[1],self.padded_shape[0] * self.padded_shape[1])
-		matrix = np.zeros(matrix_shape)
-		for filternum,filter in enumerate(self.weights):
-			for filter_x in range(self.output_shape[1]):
-				y = (filternum) * (self.output_shape[1]) +  (filter_x)
-				start_x = self.stride[0] * filter_x
-				for sub_filter_x,subfilter in enumerate(filter):
-					x = sub_filter_x*self.padded_shape[-1] + start_x#may be wrong???
-					matrix[y,x:x+len(subfilter)] = subfilter
-		return matrix		
-
+	
 	def init_input_shape(self,input_shape):
 		super().__init__(input_shape,self.num_filters,self.filter_size,self.stride)
-		self.kernel_matrix = self.get_kernel_matrix()
 		self.filter_number_weights = self.filter_size[0] * self.num_input_channels
 		self.number_weights = self.filter_number_weights * self.num_filters
  
 	def run(self,input_layer):	
-		padded_input_layer = np.array([np.pad(channel,self.pad,mode = 'constant') for channel in input_layer])
-		vectored_input_layer = np.ravel(padded_input_layer)
-		return np.reshape(np.matmul(self.kernel_matrix,vectored_input_layer),self.output_shape)	
+		padded_input_layer = np.zeros(self.padded_shape)
+		padded_input_layer[:self.input_shape[0],self.pad:self.pad+self.input_shape[1]] = input_layer
+		output_channel = np.zeros(self.output_shape)
+		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
+			slice =  np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0]])
+			for filter_num,filter in enumerate(self.weights):
+				multiplied_average = slice*filter
+				multiplied_sum_average = np.sum(multiplied_average)
+				output_channel[filter_num,x_pos//self.stride[0]] = multiplied_sum_average
+		return output_channel
 	
 	def derivative(self,input_layer,output_layer_derivative):
-		padded_input_layer = np.pad(input_layer,self.pad,mode = 'constant')
+		padded_input_layer = np.zeros(self.padded_shape)
+		padded_input_layer[:,self.pad:self.pad+self.input_shape[1]] = input_layer
 		weight_derivative = np.zeros(self.weights.shape)
 		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
 			slice = padded_input_layer[:,x_pos:x_pos + self.filter_size[0]]
@@ -99,10 +90,12 @@ class Convolution1D(Convolution):#NEEDS TESTING
 		return weight_derivative
 
 	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
-		vectored_output_layer = np.ravel(output_layer_derivative)
-		vectored_input_layer =  np.matmul(self.kernel_matrix.T,vectored_output_layer)
-		prev_layer_derivative = np.reshape(vectored_input_layer,self.padded_shape)
-		return prev_layer_derivative[:,self.pad:self.pad+self.input_shape[1]] 
+		prev_layer_derivative = np.zeros(self.padded_shape)
+		for filter_num,filter in enumerate(self.weights):
+			for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
+				prev_layer_derivative[:,x_pos:x_pos + self.filter_size[0]] += output_layer_derivative[filter_num,x_pos//self.stride[0]] * filter
+		return prev_layer_derivative[:,self.pad:self.pad+input_layer.shape[1]] 
+		
  
 class Convolution2D(Convolution):#NEEDS TESTING
 	def __init__(self,num_filters =1, filter_size = (2,2), stride = (2,2),pad = 0):
@@ -112,32 +105,25 @@ class Convolution2D(Convolution):#NEEDS TESTING
 		self.stride = stride if stride is np.ndarray else np.array(stride)
 		self.pad = pad
 	
-	def get_kernel_matrix(self):
-		matrix_shape = (self.output_shape[0] * self.output_shape[1]*self.output_shape[2],self.padded_shape[0] * self.padded_shape[1]*self.padded_shape[2])
-		matrix = np.zeros(matrix_shape)
-		for filternum,filter in enumerate(self.weights):
-			for filter_y in range(self.output_shape[1]):
-				for filter_x in range(self.output_shape[2]):
-					y = (filternum) * (self.output_shape[1]) + (filter_y*self.output_shape[2]) +  (filter_x)
-					start_x = self.stride[1] * self.padded_shape[2]*filter_y + self.stride[0] * filter_x
-					for sub_filter_x,subfilter in enumerate(filter):
-						for sub_filter_y,partialsubfilter in enumerate(subfilter):
-							x = sub_filter_y*self.padded_shape[2] + sub_filter_x + start_x
-							#print(start_x,x,y,partialsubfilter,matrix[y,x:x+len(partialsubfilter)])
-							matrix[y,x:x+len(partialsubfilter)] = partialsubfilter
-		return matrix		
-	
 	def init_input_shape(self,input_shape):
 		super().__init__(input_shape,self.num_filters,self.filter_size,self.stride)
-		self.kernel_matrix = self.get_kernel_matrix()
 		self.filter_number_weights = self.filter_size[0] * self.filter_size[1] * self.num_input_channels
 		self.number_weights = self.filter_number_weights * self.num_filters
 	
-	def run(self,input_layer):	
-		padded_input_layer = np.array([np.pad(channel,self.pad,mode = 'constant') for channel in input_layer])
-		vectored_input_layer = np.ravel(padded_input_layer)
-		return np.reshape(np.matmul(self.kernel_matrix,vectored_input_layer),self.output_shape)	
-	
+	def run(self,input_layer):		
+		padded_input_layer = np.zeros(self.padded_shape)
+		padded_input_layer[:,self.pad:self.pad+input_layer.shape[1],self.pad:self.pad+input_layer.shape[2]] = input_layer
+		output_channel = np.zeros(self.output_shape)
+		for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
+			for y_pos in range(0,self.individual_input_shape[1]-self.filter_size[1]+1,self.stride[1]):
+				slice =  np.array(padded_input_layer[:,x_pos:x_pos + self.filter_size[0],y_pos:y_pos + self.filter_size[1]])
+				for filter_num,filter in enumerate(self.weights):
+					multiplied_average = slice*filter
+					multiplied_sum_average = np.sum(multiplied_average)
+					output_channel[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]] = multiplied_sum_average	
+		#print("CONV",output_channel)	
+		return output_channel
+
 	def derivative(self,input_layer,output_layer_derivative):
 		padded_input_layer = np.zeros(self.padded_shape)
 		padded_input_layer[:,self.pad:self.pad+input_layer.shape[1],self.pad:self.pad+input_layer.shape[2]] = input_layer
@@ -148,13 +134,14 @@ class Convolution2D(Convolution):#NEEDS TESTING
 				for filter_num in range(self.num_filters): 
 					weight_derivative[filter_num] += slice * output_layer_derivative[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]]
 		return weight_derivative
-	
+
 	def derivative_prev_layer(self,input_layer,output_layer_derivative,**kwargs):
-		vectored_output_layer = np.ravel(output_layer_derivative)
-		#vectored_output_layer = np.reshape(output_layer_derivative,(self.output_shape[0]*self.output_shape[1]*self.output_shape[2]))
-		vectored_input_layer =  np.matmul(self.kernel_matrix.T,vectored_output_layer)
-		prev_layer_derivative = np.reshape(vectored_input_layer,self.padded_shape)
-		return prev_layer_derivative[:,self.pad:self.pad+self.input_shape[1],self.pad:self.pad+self.input_shape[2]] 
+		prev_layer_derivative = np.zeros(self.padded_shape)
+		for filter_num,filter in enumerate(self.weights):
+			for x_pos in range(0,self.individual_input_shape[0]-self.filter_size[0]+1,self.stride[0]):
+				for y_pos in range(0,self.individual_input_shape[1] - self.filter_size[1] + 1, self.stride[1]):
+					prev_layer_derivative[:,x_pos:x_pos + self.filter_size[0],y_pos:y_pos + self.filter_size[1]] += output_layer_derivative[filter_num,x_pos//self.stride[0],y_pos//self.stride[1]] * filter
+		return prev_layer_derivative[:,self.pad:self.pad+input_layer.shape[1],self.pad:self.pad+input_layer.shape[2]] 
 
 class TransposedConvolution1D(Convolution):
 	def __init__(self,num_filters =1, filter_size = (2), stride = (2)):
