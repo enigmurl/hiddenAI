@@ -32,11 +32,10 @@ if __name__ == "__main__":
 	a = Sequential((9),
 				FullyConnected(6),
 				Bias(),
-				Sigmoid(),
+				Tanh(),
 				FullyConnected(2),
 				Bias(),
-				Sigmoid())
-	'''
+				Tanh(),optimizer = optimizers.BatchGradientDescent(learning_rate = lrning_rate))'''
 	trainingData =np.array( [
 	[[[1,0,1,0,1,0,1,0,1]]],
 	[[[0,1,0,1,0,1,0,1,0]]],
@@ -48,7 +47,6 @@ if __name__ == "__main__":
 	[[[0,0,1,0,1,0,1,0,1]]]
 	])
 	#trainingData = np.reshape(trainingData,(8,9))
-	#trainingData = np.reshape(trainingData,(8,1,9))
 	print(a.run(trainingData[0]))
 	labels = [np.array([0,1]),np.array([1,0]),np.array([1,0]),np.array([0,1]),np.array([1,0]),np.array([0,1]),np.array([1,0]),np.array([0,1])]
 	startTime = time.time()

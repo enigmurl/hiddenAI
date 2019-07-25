@@ -25,15 +25,16 @@ class Sequential:
 				output_shape = convertor.output_shape
 			layer.init_input_shape(output_shape)
 			output_shape = layer.output_shape if hasattr(layer.output_shape,"__iter__") else [layer.output_shape]
-			#print(layer,output_shape)
 			self.training_layers.append(layer)
 			if layer.config["type"] not in training_layer_types:
 				new_layers.append(layer)
 			if hasattr(layer,"weights"):# SEEE IF THIS should be inside the "if layer.config["type"] statement 
 				self.weighted_layers.append(layer)
-		print(self)
 		return new_layers
 
+	def reset(self):
+		for layer in self.weighted_layers:
+			layer.reset()
 	
 	def __iter__(self):
 		return self.layers.__iter__()

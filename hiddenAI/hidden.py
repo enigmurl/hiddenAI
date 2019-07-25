@@ -5,6 +5,9 @@ class Hidden:
 		self.input_shape = input_shape if hasattr(input_shape,"__iter__") else [input_shape]
 		self.output_shape = output_shape if hasattr(output_shape,"__iter__") else [output_shape]
 	
+	def reset(self):
+		pass
+	
 	def update_weights(self,weights):
 		self.weights = weights
 	

@@ -34,25 +34,22 @@ for ind in range(num_data):
 #INITIATING THE MODEL
 learning_rate = learning_rates.ConstantLearningRate(0.1)
 net = Sequential((1,28,28),
-				Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3)),
+				Convolution2D(num_filters = 32,filter_size = (3,3),stride = (3,3),pad = 1),
+				MaxPooling2D(),
 				Bias(),	
 				ReLU(),	
+				Convolution2D(num_filters = 64, filter_size = (3,3),stride = (3,3),pad = 1),
 				MaxPooling2D(),
-				#Dropout(0.5),
-				Convolution2D(num_filters = 64, filter_size = (3,3),stride = (3,3)),
 				Bias(),
 				ReLU(),
-				MaxPooling2D(),
 				FullyConnected(128),
 				Bias(),
 				ReLU(),
-				#Sigmoid(),
-				#Dropout(0.2),
 				FullyConnected(10),
 				Bias(),
-				Softmax(),optimizer = optimizers.BatchGradientDescent(128,momentum = 0.9,learning_rate = learning_rate))
-net.open_from_file("stored_weights/digitweights")# open up from digitweight a pre trained model
-num_trials = 3 # how many times we run over the same 10,000 images (epoch)
+				Softmax(),optimizer = optimizers.BatchGradientDescent(batch_size = 128,momentum = 0.9,learning_rate = learning_rate))
+#net.open_from_file("stored_weights/digitweights")# open up from digitweight a pre trained model
+num_trials = 16 # how many times we run over the same 10,000 images (epoch)
 
 #TRAINING THE MODEL
 score = 0

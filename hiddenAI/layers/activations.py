@@ -166,7 +166,6 @@ class Softmax(Activation):
 		for ind,val in enumerate(exponent_values):
 			sum_without_val = total_sum - val
 			prev_layer_derivative.append(output_layer_derivative[ind] * (sum_without_val*val)/(total_sum**2))'''
-		#print(prev_layer_derivative)
 		return prev_layer_derivative* output_layer_derivative 
 	
 class Tanh(Activation): #TESTED hyperbolic tangent

@@ -8,7 +8,7 @@ class GAN(Sequential):
 		self.generator = generator
 		self.noise = noise
 		self.generator_input_shape = generator.layers[0].input_shape
-		self.discriminator_input = discriminator.layers[0].input_shape
+		self.discriminator_input_shape = discriminator.layers[0].input_shape
 
 	def train(self,real_data,real_data_output = np.array([0,1]),generated_data_output = np.array([1,0]),progress_bar = True):# MAKE THIS INCLUDE THE OPTIMIZERS BETTER
 		discriminator_weighted_layers = self.discriminator.weighted_layers
@@ -74,19 +74,15 @@ class GAN(Sequential):
 class ConditionalGAN(GAN):
 	def __init__(self,discriminator, generator,noise_shape,noise = np.random.random):
 		super().__init__(discriminator,generator,noise)
-		self.noise_shape = noise_shape
-		self.condition_shape = self.generator_input_shape - noise_shape
+		self.noise_shape = noise_shape if noise_shape is np.ndarray else np.array(noise_shape)
+		self.condition_shape = self.generator_input_shape - self.noise_shape
 		self.discriminator_prediction_shape = self.discriminator_input_shape-self.condition_shape	
 
 	def train(self,real_data,conditions,real_data_output = np.array([0,1]),generated_data_output = np.array([1,0]),progress_bar = True): 
 		discriminator_weighted_layers = self.discriminator.weighted_layers
-		self.discriminator.optimizer.last_gradients = self.discriminator.optimizer.blank_weights(discriminator_weighted_layers)
 		generator_weighted_layers = self.generator.weighted_layers
-		self.generator.optimizer.last_gradients = self.generator.optimizer.blank_weights(generator_weighted_layers)
-		
-		#training_inputs = self.noise(size = np.concatenate((np.array([len(real_data)]),np.array(self.noise_shape))))
-		self.generator.optimizer.iterations = 0
-		self.discriminator.optimizer.iterations = 0		
+		self.discriminator.optimizer.startup(discriminator_weighted_layers)
+		self.generator.optimizer.startup(generator_weighted_layers)
 		discriminator_count = 0
 		generator_count     = 0	
 		if progress_bar:
@@ -110,12 +106,12 @@ class ConditionalGAN(GAN):
 			generator_layers = self.generator.training_run(generator_input)
 			discriminator_layers = self.discriminator.training_run(np.concatenate((generator_layers[-1],conditions[ind])))
 			discriminator_loss_derivative = self.discriminator.loss.derivative_prev_layer(discriminator_layers[-1],generated_data_output,batch_size = self.discriminator.optimizer.batch_size)
-			discriminator_gradients,generator_last_derivative = self.discriminator.optimizer.derive_one_data(	discriminator_gradients,
+			discriminator_gradients,generator_last_derivative =  self.discriminator.optimizer.derive_one_data(	discriminator_gradients,
 																												self.discriminator.training_layers,
 																												discriminator_loss_derivative,
-																												discriminator_layers,last_layer_return = True)
-			generator_last_derivative = generator_last_derivative[tuple([slice(None,dimension) for dimension in self.discriminator_prediction_shape])]
-			generator_last_derivative = -generator_last_derivative
+																												discriminator_layers,
+																												last_layer_return = True)
+			generator_last_derivative = -generator_last_derivative[tuple([slice(None,dimension) for dimension in self.discriminator_prediction_shape])]
 			generator_gradients = self.generator.optimizer.derive_one_data(	generator_gradients,
 																			self.generator.training_layers,
 																			generator_last_derivative,

@@ -123,7 +123,6 @@ class Convolution2D(Convolution):#NEEDS TESTING
 					for sub_filter_x,subfilter in enumerate(filter):
 						for sub_filter_y,partialsubfilter in enumerate(subfilter):
 							x = sub_filter_y*self.padded_shape[2] + sub_filter_x + start_x
-							#print(start_x,x,y,partialsubfilter,matrix[y,x:x+len(partialsubfilter)])
 							matrix[y,x:x+len(partialsubfilter)] = partialsubfilter
 		return matrix		
 	

@@ -10,6 +10,11 @@ class BatchGradientDescent:
 		self.batch_size = batch_size
 		self.iterations = 0
 	
+	def startup(self,weighted_layers):
+		self.weighted_layers = weighted_layers
+		self.iterations = 0
+		self.last_gradients = self.blank_weights(self.weighted_layers)
+	
 	def descend(self,weight_gradients,weighted_layers): #
 		current_learning_rate = self.learning_rate.next_learning_rate(self.iterations)
 		gradient_with_momentum = [self.momentum * (self.last_gradients[layer_num]) +  current_learning_rate * layer_gradients for layer_num,layer_gradients in enumerate(weight_gradients)]
@@ -59,7 +64,7 @@ class BatchGradientDescent:
 		for layer in training_layers:
 			if hasattr(layer,"weights"):
 				weighted_layers.append(layer)		
-
+		self.weighted_layers= weighted_layers
 		training_data = list(zip(input_data,expected_outputs))
 		batched_data = self.batch_data(training_data,self.batch_size)
 		self.last_gradients = self.blank_weights(weighted_layers) 

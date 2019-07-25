@@ -1,5 +1,5 @@
 import numpy as np
-
+#INVESTIGATE WHY ITS WORKING
 class MeanSquaredLoss:
 	def __init__(self):
 		pass	
@@ -7,7 +7,7 @@ class MeanSquaredLoss:
 	def derivative_prev_layer(self,predicted_output,expected_output,batch_size = 1):
 		return  (predicted_output - expected_output) * 2/batch_size
 	
-	def apply_sing_loss(self,predicted_output,expected_output,batch_size = 1):
+	def apply_single_loss(self,predicted_output,expected_output,batch_size = 1):
 		partial_loss = predicted_output - expected_output
 		loss =  partial_loss*partial_loss
 		return loss/batch_size
